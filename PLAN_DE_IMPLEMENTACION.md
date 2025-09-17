@@ -10,28 +10,37 @@
 - Package.json minimalista con solo las dependencias esenciales iniciales ✅
 - Setup de ESLint, Prettier y Husky para calidad de código ✅
 
-### 2. Configuración de Testing
+### 2. Configuración de Testing ✅
 
 - Jest v30.0, lanzada en junio de 2025, con TypeScript y ESM support. ✅
 - Supertest para test de integración HTTP ✅
-- Testcontainers para aislamiento completo de las bases de datos en tests.
-- Configuración de Husky integrada con pipeline de testing (pre-commit para unit tests, pre-push para integration tests)
-- Separación estricta de bases de datos de test como en el proyecto original de wayrapp
+- Testcontainers para aislamiento completo de las bases de datos en tests. ✅
+- Configuración de Husky integrada con pipeline de testing (pre-commit para los tests) ✅
 
-### 3. Configuración de Docker multibase de datos
+### 3. Configuración de Entornos de Desarrollo y Testing ✅
 
-**Bases a incluir desde el inicio:**
+**Entorno de Desarrollo (Docker Compose):** ✅
 
-- PostgreSQL (Prisma)
-- MySQL para validar compatibilidad SQL
-- MongoDB para testing NoSQL
+- Propósito: Proporcionar un entorno de trabajo diario estable y consistente para el desarrollo de funcionalidades.
+- Tecnología: docker-compose.yml.
+- Bases de Datos:
+    - Se levantan servicios para PostgreSQL, MySQL y MongoDB.
+    - Los datos son persistentes gracias al uso de volúmenes nombrados, sobreviviendo a los reinicios.
+- Características:
+    - Configurado para hot-reloading del código de la aplicación.
+    - Puertos expuestos para permitir la conexión a las bases de datos con herramientas externas.
 
-**Configuraciones Docker:**
+**Entorno de Testing (Testcontainers):** ✅
 
-- Docker Compose para desarrollo con las 3 BDs
-- Docker Compose para testing con bases temporales en memoria
-- Scripts automatizados para gestión de entornos
-- Red Docker para comunicación entre servicios
+- Propósito: Garantizar pruebas de integración fiables, aisladas y deterministas.
+- Tecnología: Testcontainers, gestionado directamente desde el código de Jest.
+- Bases de Datos:
+    - Los contenedores de las bases de datos (PostgreSQL, MySQL, MongoDB) se crean y destruyen dinámicamente y bajo demanda para cada suite de pruebas.
+    - Los datos son efímeros. Cada ejecución de tests comienza con una base de datos limpia.
+- Características:
+    - Aislamiento total: Los tests que corren en paralelo no interfieren entre sí, ya que cada uno puede tener su propio contenedor.
+    - No requiere archivos docker-compose.test.yml o Dockerfile.test, simplificando la configuración de la infraestructura.
+    - La configuración del entorno de testing vive junto al código de los tests, haciéndola más explícita y fácil de mantener.
 
 ### 4. Estructura de carpetas
 
@@ -58,7 +67,7 @@
 
 ```
 wayrapp-back/
-├── src/
+├── src/ ✅
 │   ├── core/                           # Lógica de negocio pura (Clean Architecture)
 │   │   ├── domain/                     # Entidades de dominio
 │   │   │   ├── entities/               # User, Course, Level, Section, Module, Lesson, Exercise
@@ -75,7 +84,7 @@ wayrapp-back/
 │   │       ├── content/                # CreateCourseUseCase, GetLessonsUseCase
 │   │       └── progress/               # TrackProgressUseCase, UpdateXPUseCase
 │   │
-│   ├── infrastructure/                 # Implementaciones técnicas
+│   ├── infrastructure/                 # Implementaciones técnicas ✅
 │   │   ├── database/                   # Persistencia agnóstica
 │   │   │   ├── adapters/               # Implementaciones específicas por BD
 │   │   │   │   ├── prisma/             # PostgreSQL con Prisma
@@ -100,12 +109,12 @@ wayrapp-back/
 │   │   │       ├── prisma.config.ts    # Config Prisma
 │   │   │       ├── typeorm.config.ts   # Config TypeORM
 │   │   │       └── mongoose.config.ts  # Config Mongoose
-│   │   ├── web/                        # HTTP/Express
+│   │   ├── web/                        # HTTP/Express ✅
 │   │   │   ├── controllers/            # HTTP controllers
 │   │   │   ├── middleware/             # Express middleware (auth, validation, security)
 │   │   │   ├── routes/                 # Route definitions
 │   │   │   ├── validators/             # Request validation con Zod
-│   │   │   └── app.ts                  # Express app setup
+│   │   │   └── app.ts                  # Express app setup ✅
 │   │   ├── external/                   # Servicios externos
 │   │   │   ├── email/                  # Email providers (SendGrid, etc.)
 │   │   │   ├── storage/                # File storage (AWS S3, etc.)
@@ -148,21 +157,20 @@ wayrapp-back/
 │   │   ├── errors/                     # Custom errors y error handling
 │   │   └── __tests__/                  # Tests de utilidades compartidas
 │   │
-│   └── server.ts                       # Entry point del servidor
+│   └── server.ts                       # Entry point del servidor ✅
 │
-├── __tests__/                          # Tests globales y de integración
-│   ├── integration/                    # Tests de integración por BD
+├── __tests__/                          # Tests globales y de integración ✅
+│   ├── integration/                    # Tests de integración por BD ✅
 │   │   ├── postgresql/                 # Tests con PostgreSQL
 │   │   ├── mysql/                      # Tests con MySQL
 │   │   └── mongodb/                    # Tests con MongoDB
 │   ├── e2e/                            # Tests end-to-end
 │   ├── fixtures/                       # Datos de prueba
 │   ├── utils/                          # Utilidades de testing
-│   └── setup.ts                        # Setup global de tests
+│   └── setup.ts                        # Setup global de tests ✅
 │
-├── docker/                             # Configuraciones Docker
-│   ├── Dockerfile.dev                  # Dockerfile desarrollo
-│   ├── Dockerfile.test                 # Dockerfile testing
+├── docker/                             # Configuraciones Docker ✅
+│   ├── Dockerfile.dev                  # Dockerfile desarrollo ✅
 │   ├── Dockerfile.prod                 # Dockerfile producción
 │   └── scripts/                        # Scripts Docker
 │       ├── setup-postgres.sh           # Setup PostgreSQL
@@ -185,21 +193,19 @@ wayrapp-back/
 │       ├── ci.yml                      # Continuous Integration
 │       └── cd.yml                      # Continuous Deployment
 │
-├── .env.example                        # Template variables entorno
+├── .env.example                        # Template variables entorno ✅
 ├── .env.test.example                   # Template variables test
-├── docker-compose.yml                  # Docker desarrollo
-├── docker-compose.test.yml             # Docker testing
+├── docker-compose.yml                  # Docker desarrollo ✅
 ├── docker-compose.prod.yml             # Docker producción
-├── jest.config.js                      # Configuración Jest
-├── jest.integration.config.js          # Config Jest integración
-├── tsconfig.json                       # Configuración TypeScript
+├── jest.config.js                      # Configuración Jest ✅
+├── jest.integration.config.js          # Config Jest integración ✅
+├── tsconfig.json                       # Configuración TypeScript ✅
 ├── tsconfig.build.json                 # Config TypeScript para build
-├── .eslintrc.js                        # Configuración ESLint
-├── .prettierrc                         # Configuración Prettier
-├── .husky/                             # Git hooks
-│   ├── pre-commit                      # Lint + format + unit tests
-│   └── pre-push                        # Integration tests
-└── package.json                        # Dependencias y scripts
+├── .eslint.config.js                   # Configuración ESLint ✅
+├── .prettierrc                         # Configuración Prettier ✅
+├── .husky/                             # Git hooks ✅
+│   └── pre-commit                      # Lint + format + tests ✅
+└── package.json                        # Dependencias y scripts ✅
 ```
 
 ## Fase 2: Capa de Abstracción de Datos
