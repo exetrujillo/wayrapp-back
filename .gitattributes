@@ -1,0 +1,2 @@
+# Establece el comportamiento por defecto para todos los archivos
+* text=auto eol=lf

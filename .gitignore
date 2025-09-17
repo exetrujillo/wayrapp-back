@@ -3,3 +3,6 @@ dist/
 .env
 npm-debug.log
 *.log
+
+# Reportes de jest
+coverage/

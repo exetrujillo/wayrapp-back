@@ -12,8 +12,8 @@
 
 ### 2. Configuración de Testing
 
-- Jest v30.0, lanzada en junio de 2025, con TypeScript y ESM support.
-- Supertest para test de integración HTTP
+- Jest v30.0, lanzada en junio de 2025, con TypeScript y ESM support. ✅
+- Supertest para test de integración HTTP ✅
 - Testcontainers para aislamiento completo de las bases de datos en tests.
 - Configuración de Husky integrada con pipeline de testing (pre-commit para unit tests, pre-push para integration tests)
 - Separación estricta de bases de datos de test como en el proyecto original de wayrapp
