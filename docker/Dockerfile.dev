@@ -1,0 +1,38 @@
+# ==================================================================
+# Dockerfile para el Entorno de Desarrollo de WayrApp Backend
+# ==================================================================
+
+# 1. Imagen Base, esta es la última LTS
+FROM node:22.19.0-alpine
+
+# 2. Directorio de Trabajo
+# Establecemos el directorio de trabajo dentro del contenedor.
+# Todos los comandos siguientes se ejecutarán en este contexto.
+WORKDIR /usr/src/app
+
+# 3. Instalar Dependencias (Aprovechando el Cache de Docker)
+# Copiamos primero solo los archivos que definen las dependencias.
+# Docker creará una capa en este punto. Si estos archivos no cambian,
+# Docker reutilizará esta capa en builds futuros, acelerando el proceso.
+COPY package*.json ./
+
+# Ejecutamos la instalación de dependencias.
+# Esto ocurrirá solo si la capa anterior fue invalidada (si package*.json cambió).
+RUN npm install
+
+# 4. Copiar el Código Fuente
+# Ahora copiamos el resto del código de la aplicación.
+# El archivo .dockerignore en la raíz del proyecto se asegurará de que
+# no copiemos archivos innecesarios como node_modules, .git, etc.
+COPY . .
+
+# 5. Exponer el Puerto
+# Informamos a Docker que el contenedor escuchará en el puerto 3000.
+# Esto es principalmente para documentación. El mapeo real se hace en docker-compose.yml.
+EXPOSE 3000
+
+# 6. Comando de Inicio por Defecto
+# Este es el comando que se ejecutará cuando el contenedor inicie.
+# Está diseñado para un entorno de desarrollo con hot-reloading.
+# Asumimos que tendremos un script "dev" en el package.json.
+CMD ["npm", "run", "dev"]
