@@ -1,0 +1,74 @@
+networks:
+  wayrapp-net:
+    driver: bridge
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: wayrapp-back-app
+    ports:
+      # Lee el puerto del host desde .env, con 3000 como fallback.
+      - '${APP_HOST_PORT:-3000}:3000'
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    depends_on:
+      - postgres-db
+      - mysql-db
+      - mongo-db
+    networks:
+      - wayrapp-net
+
+  postgres-db:
+    image: postgres:17.3-alpine
+    container_name: wayrapp-postgres
+    environment:
+      POSTGRES_USER: ${DB_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_POSTGRES_NAME}
+    ports:
+      # Lee el puerto del host desde .env, con 5432 como fallback.
+      - '${DB_POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - wayrapp-net
+
+  mysql-db:
+    image: mysql:8.4
+    container_name: wayrapp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_MYSQL_NAME}
+      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_PASSWORD: ${DB_MYSQL_PASSWORD}
+    ports:
+      # Lee el puerto del host desde .env, con 3306 como fallback.
+      - '${DB_MYSQL_HOST_PORT:-3306}:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - wayrapp-net
+
+  mongo-db:
+    image: mongo:8.0
+    container_name: wayrapp-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_MONGO_ROOT_PASSWORD}
+    ports:
+      # Lee el puerto del host desde .env, con 27017 como fallback.
+      - '${DB_MONGO_HOST_PORT:-27017}:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - wayrapp-net
+
+volumes:
+  postgres-data:
+  mysql-data:
+  mongo-data:

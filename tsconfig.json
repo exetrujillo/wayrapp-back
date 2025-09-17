@@ -1,0 +1,31 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // --- Configuración de Módulos y Salida ---
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    // --- Aliases de Rutas ---
+    "baseUrl": ".", // Necesario para que funcionen los 'paths'.
+    "paths": {
+      "@/*": ["src/*"] // Permite importar con '@/' en lugar de rutas relativas horribles
+    },
+
+    // --- Nivel de "Estrictez" (si es que existe esa palabra xD) y Calidad de Código ---
+    "strict": true, // Habilita todas las comprobaciones de tipo estrictas.
+    "esModuleInterop": true, // Mejora la compatibilidad entre módulos CommonJS y ES.
+    "forceConsistentCasingInFileNames": true, // Evita problemas entre diferentes sistemas operativos.
+    "skipLibCheck": true, // No comprueba los tipos en los archivos de declaración (.d.ts) de las dependencias.
+
+    // --- Opciones Adicionales Recomendadas ---
+    "resolveJsonModule": true, // Permite importar archivos .json directamente en el código.
+    "noUnusedLocals": true, // Da error si hay variables locales declaradas pero no usadas.
+    "noUnusedParameters": true, // Da error si hay parámetros de función declarados pero no usados.
+    "noImplicitReturns": true // Asegura que todas las rutas de una función devuelvan un valor.
+  },
+  "include": ["src/**/*"], // Solo compila los archivos que están dentro de la carpeta 'src'.
+  "exclude": ["node_modules", "dist"] // Ignora estas carpetas.
+}
