@@ -26,8 +26,14 @@
     "noUnusedLocals": true, // Da error si hay variables locales declaradas pero no usadas.
     "noUnusedParameters": true, // Da error si hay parámetros de función declarados pero no usados.
     "noImplicitReturns": true // Asegura que todas las rutas de una función devuelvan un valor.
-
   },
-  "include": ["src/**/*", "__tests__/**/*"], // Solo compila los archivos que están dentro de la carpeta 'src' y en '__test__'.
+  "include": [
+    "src/**/*",
+    "__tests__/**/*",
+    "scripts/**/*",
+    "prisma.config.cjs",
+    "jest.config.js",
+    "jest.integration.config.js"
+  ],
   "exclude": ["node_modules", "dist"] // Ignora estas carpetas.
 }

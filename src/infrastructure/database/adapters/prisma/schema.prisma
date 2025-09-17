@@ -1,0 +1,35 @@
+// WayrApp Database Schema
+// Author: Exequiel Trujillo
+// Schema para la plataforma de aprendizaje de lenguas - En desarrollo
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_POSTGRES")
+}
+
+// Modelo de Usuario simplificado para el inicio del TDD
+model User {
+  // --- Campos Esenciales ---
+  id           String   @id // Vamos a usar UUID pero lo generamos en la app para no depender de la BD
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(student)
+
+  // --- Timestamps ---
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // --- Mapeo de Tabla ---
+  @@map("users") // Mantenemos el nombre de la tabla en plural, es una buena convención
+}
+
+// Enum para los roles de usuario
+enum Role {
+  student
+  content_creator
+  admin
+}

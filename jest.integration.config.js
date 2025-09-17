@@ -22,14 +22,14 @@ export default {
   testMatch: [
     '<rootDir>/__tests__/**/*.test.ts', // Solo busca tests en la carpeta raíz __tests__
   ],
-  
+
   // Configuración de cobertura de código precisa para medir solo el código fuente.
   collectCoverage: true,
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/__tests__/**', // No incluir carpetas de test dentro de src
-    '!src/**/*.test.ts',    // No incluir archivos de test dentro de src
+    '!src/**/*.test.ts', // No incluir archivos de test dentro de src
   ],
 
   // Buenas prácticas para asegurar el aislamiento de los tests.

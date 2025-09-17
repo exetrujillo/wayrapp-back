@@ -5,24 +5,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch --env-file .env src/server.ts",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-
+    "setup:dev": "sh scripts/setup-dev.sh",
+    "db:generate": "docker-compose exec app node_modules/.bin/prisma generate --schema=./src/infrastructure/database/adapters/prisma/schema.prisma",
+    "db:migrate": "docker-compose exec app node_modules/.bin/prisma migrate dev --schema=./src/infrastructure/database/adapters/prisma/schema.prisma",
+    "db:deploy": "docker-compose exec app node_modules/.bin/prisma migrate deploy --schema=./src/infrastructure/database/adapters/prisma/schema.prisma",
     "test": "npm run test:unit",
     "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
-    
     "test:integration": "cross-env TEST_DB_TYPE=postgres npm run test:integration:run",
-    "test:integration:postgres": "cross-env TEST_DB_TYPE=postgres npm run test:integration:run",
-    "test:integration:mysql": "cross-env TEST_DB_TYPE=mysql npm run test:integration:run",
-    "test:integration:mongodb": "cross-env TEST_DB_TYPE=mongodb npm run test:integration:run",
     "test:integration:run": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.integration.config.js --passWithNoTests",
-    "test:integration:ci": "npm run test:integration:postgres",
-    
-    "test:all": "npm run test:unit && npm run test:integration",
-
+    "test:all-dbs": "npm run test:integration:postgres && npm run test:integration:mysql && npm run test:integration:mongodb",
     "prepare": "husky",
-
     "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f app",
@@ -47,6 +42,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.5.1",
     "@types/supertest": "^6.0.3",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "cross-env": "^10.0.0",
@@ -57,6 +53,7 @@
     "jest": "^30.1.3",
     "lint-staged": "^16.1.6",
     "prettier": "^3.6.2",
+    "prisma": "^6.16.2",
     "supertest": "^7.1.4",
     "testcontainers": "^11.5.1",
     "ts-jest": "^29.4.2",
@@ -65,8 +62,11 @@
     "typescript-eslint": "^8.44.0"
   },
   "dependencies": {
+    "@prisma/client": "^6.16.2",
     "express": "^5.1.0",
-    "zod": "^4.1.9"
+    "uuid": "^13.0.0",
+    "zod": "^4.1.9",
+    "zod-validation-error": "^4.0.1"
   },
   "lint-staged": {
     "*.ts": [

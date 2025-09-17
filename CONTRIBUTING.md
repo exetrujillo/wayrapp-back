@@ -25,10 +25,13 @@ Este proyecto se desarrolla principalmente en la rama `dev` y se publica en la r
 
 ## Estilo de código
 
+- Desarrollo TDD: escribe pruebas antes de implementar la funcionalidad.
 - Sigue el estilo del código existente.
-- Añade comentarios cuando la lógica no sea obvia.
+- Añade comentarios cuando la lógica no sea obvia o si quieres dejar claro lo que haces.
 - Incluye pruebas o ejemplos si corresponde.
 - Mantén la documentación en formato JSDocs actualizada. Con los campos @module @category @author @since como mínimo.
+- Usa TypeScript y tipados estrictos siempre que sea posible.
+- Usamos camelCase en el código de la aplicación y snake_case en la base de datos.
 
 ---
 

@@ -6,7 +6,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile.dev
+      dockerfile: ./docker/Dockerfile.dev
     container_name: wayrapp-back-app
     ports:
       # Lee el puerto del host desde .env, con 3000 como fallback.

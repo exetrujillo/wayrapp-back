@@ -15,9 +15,10 @@
  *
  */
 
+import { config } from './infrastructure/config/environment.js';
 import app from './infrastructure/web/app.js';
 
-const port = process.env.PORT;
+const port = config.PORT;
 
 app.listen(port, () => {
   console.log(`🚀 Servidor escuchando en http://localhost:${port}`);

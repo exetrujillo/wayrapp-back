@@ -10,28 +10,21 @@ FROM node:22.19.0-alpine
 # Todos los comandos siguientes se ejecutarán en este contexto.
 WORKDIR /usr/src/app
 
-# 3. Instalar Dependencias (Aprovechando el Cache de Docker)
-# Copiamos primero solo los archivos que definen las dependencias.
-# Docker creará una capa en este punto. Si estos archivos no cambian,
-# Docker reutilizará esta capa en builds futuros, acelerando el proceso.
+# 3. Copiar los archivos de configuración y el esquema de Prisma
 COPY package*.json ./
 
-# Ejecutamos la instalación de dependencias.
-# Esto ocurrirá solo si la capa anterior fue invalidada (si package*.json cambió).
+# 4. Instalar Dependencias
 RUN npm install
 
-# 4. Copiar el Código Fuente
-# Ahora copiamos el resto del código de la aplicación.
-# El archivo .dockerignore en la raíz del proyecto se asegurará de que
-# no copiemos archivos innecesarios como node_modules, .git, etc.
+# 5. Copiar el resto del código fuente
 COPY . .
 
-# 5. Exponer el Puerto
+# 6. Exponer el Puerto
 # Informamos a Docker que el contenedor escuchará en el puerto 3000.
 # Esto es principalmente para documentación. El mapeo real se hace en docker-compose.yml.
 EXPOSE 3000
 
-# 6. Comando de Inicio por Defecto
+# 7. Comando de Inicio por Defecto
 # Este es el comando que se ejecutará cuando el contenedor inicie.
 # Está diseñado para un entorno de desarrollo con hot-reloading.
 # Asumimos que tendremos un script "dev" en el package.json.

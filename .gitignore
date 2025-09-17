@@ -6,3 +6,4 @@ npm-debug.log
 
 # Reportes de jest
 coverage/
+/generated/prisma
