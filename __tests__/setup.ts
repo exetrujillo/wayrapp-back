@@ -19,7 +19,8 @@ declare global {
   var __TESTCONTAINER__: SupportedContainer;
 }
 
-export async function setup() {
+// Cambia la exportación de la función setup
+const setup = async () => {
   const dbType = process.env.TEST_DB_TYPE || 'postgres';
   console.log(`\nSetting up Testcontainer for: ${dbType}`);
 
@@ -55,9 +56,12 @@ export async function setup() {
 
   console.log(`${dbType} container started.`);
   console.log(`Connection URL: ${connectionUri}`);
-}
+};
 
-export async function teardown() {
+// Exporta la función como exportación por defecto
+export default setup;
+
+export const teardown = async () => {
   const dbType = process.env.TEST_DB_TYPE || 'postgres';
   console.log(`\nTearing down Testcontainer for: ${dbType}`);
 
@@ -65,4 +69,4 @@ export async function teardown() {
     await global.__TESTCONTAINER__.stop();
     console.log(`${dbType} container stopped.`);
   }
-}
+};
