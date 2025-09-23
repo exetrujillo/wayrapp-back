@@ -4,16 +4,16 @@
 
 **Objetivo: Establecer fundamentos sólidos con las dependencias más actualizadas**
 
-### 1. ✅ Inicialización del proyecto 
+### 1. ✅ Inicialización del proyecto
 
-- ✅ Crear `wayrapp-back` con Node.js v22.19.0 (LTS) y TypeScript 5.9.2 
-- ✅ Package.json minimalista con solo las dependencias esenciales iniciales 
-- ✅ Setup de ESLint, Prettier y Husky para calidad de código 
+- ✅ Crear `wayrapp-back` con Node.js v22.19.0 (LTS) y TypeScript 5.9.2
+- ✅ Package.json minimalista con solo las dependencias esenciales iniciales
+- ✅ Setup de ESLint, Prettier y Husky para calidad de código
 
-### 2. ✅ Configuración de Testing 
+### 2. ✅ Configuración de Testing
 
-- ✅ Jest v30.0, lanzada en junio de 2025, con TypeScript y ESM support.
-- ✅ Supertest para test de integración HTTP 
+- ✅ Jest v30.x (CJS).
+- ✅ Supertest para test de integración HTTP
 - ✅ Testcontainers para aislamiento completo de las bases de datos en tests
 - ✅ Configuración de Husky integrada con pipeline de testing (pre-commit para los tests)
 
@@ -44,7 +44,7 @@
 
 ### 4. Estructura de carpetas
 
-- 😒 `src/core/`: Lógica de negocio pura (domain, interfaces, use-cases)
+- ✅ `src/core/`: Lógica de negocio pura (domain, interfaces, use-cases)
 - ✅ `src/infrastructure/`: Implementaciones técnicas (database adapters, web, external services)
 - 😒 `src/modules/`: Features organizados por dominio (auth, users, content, progress)
 - 😒 `src/shared/`: Utilidades compartidas y tipos globales
@@ -68,13 +68,13 @@
 ```
 wayrapp-back/
 ├── src/
-│   ├── core/                           # Lógica de negocio pura (Clean Architecture)
-│   │   ├── domain/                     # Entidades de dominio
-│   │   │   ├── entities/               # User, Course, Level, Section, Module, Lesson, Exercise
+│   ├── core/                           # ✅ Lógica de negocio pura (Clean Architecture)
+│   │   ├── domain/                     # ✅ Entidades de dominio
+│   │   │   ├── entities/               # ✅ User, Course, Level, Section, Module, Lesson, Exercise
 │   │   │   ├── value-objects/          # Email, Password, XP, Streak
 │   │   │   └── events/                 # Domain events (UserRegistered, LessonCompleted)
-│   │   ├── interfaces/                 # Contratos abstractos
-│   │   │   ├── repositories/           # IUserRepository, ICourseRepository, IProgressRepository
+│   │   ├── interfaces/                 # ✅ Contratos abstractos
+│   │   │   ├── repositories/           # ✅ IUserRepository, ICourseRepository, IProgressRepository
 │   │   │   ├── services/               # IAuthService, IContentService, IProgressService
 │   │   │   ├── gateways/               # IEmailGateway, IFileGateway, ICacheGateway
 │   │   │   └── use-cases/              # Interfaces de casos de uso
@@ -85,10 +85,10 @@ wayrapp-back/
 │   │       └── progress/               # TrackProgressUseCase, UpdateXPUseCase
 │   │
 │   ├── infrastructure/                 # ✅ Implementaciones técnicas
-│   │   ├── database/                   # ✅Persistencia agnóstica
-│   │   │   ├── adapters/               # ✅Implementaciones específicas por BD
+│   │   ├── database/                   # ✅ Persistencia agnóstica
+│   │   │   ├── adapters/               # ✅ Implementaciones específicas por BD
 │   │   │   │   ├── prisma/             # ✅ PostgreSQL con Prisma
-│   │   │   │   │   ├── repositories/   # PrismaUserRepository, PrismaCourseRepository
+│   │   │   │   │   ├── repositories/   # ✅ PrismaUserRepository, PrismaCourseRepository
 │   │   │   │   │   ├── migrations/     # ✅ Migraciones Prisma
 │   │   │   │   │   └── schema.prisma   # ✅ Schema Prisma
 │   │   │   │   ├── typeorm/            # MySQL con TypeORM
@@ -197,9 +197,10 @@ wayrapp-back/
 ├── .env.test.example                   # Template variables test
 ├── docker-compose.yml                  # ✅ Docker desarrollo
 ├── docker-compose.prod.yml             # Docker producción
-├── jest.config.js                      # ✅ Configuración Jest
-├── jest.integration.config.js          # ✅ Config Jest integración
+├── jest.config.cjs                     # ✅ Configuración Jest
+├── jest.integration.config.cjs         # ✅ Config Jest integración
 ├── tsconfig.json                       # ✅ Configuración TypeScript
+├── tsconfig.test.json                  # ✅ Configuración TypeScript para tests
 ├── tsconfig.build.json                 # Config TypeScript para build
 ├── .eslint.config.js                   # ✅ Configuración ESLint
 ├── .prettierrc                         # ✅ Configuración Prettier

@@ -1,59 +1,52 @@
-// // __tests__/integration/postgresql/UserRepository.pg.test.ts
+// __tests__/integration/postgresql/UserRepository.pg.test.ts
 
-// import { PrismaClient } from '@prisma/client';
-// import { v4 as uuidv4 } from 'uuid';
-// import { IUserRepository } from '@/core/interfaces/repositories/IUserRepository.js';
-// import { PrismaUserRepository } from '@/infrastructure/database/adapters/prisma/repositories/PrismaUserRepository.js';
+import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient } from '@prisma/client';
+import { IUserRepository } from '@/core/interfaces/repositories/IUserRepository';
+import { PrismaUserRepository } from '@/infrastructure/database/adapters/prisma/repositories/PrismaUserRepository';
+import { TestDatabaseUtils } from '../../setup';
 
-// describe('PrismaUserRepository Integration Tests', () => {
-//   let prisma: PrismaClient;
-//   let userRepository: IUserRepository;
+describe('PrismaUserRepository Integration Tests', () => {
+  let userRepository: IUserRepository;
+  let prismaClient: PrismaClient;
 
-//   beforeAll(() => {
-//     // Obtenemos la URL de la BD de Testcontainers
-//     const databaseUrl = process.env.TEST_DATABASE_URL;
-//     if (!databaseUrl) {
-//       throw new Error('TEST_DATABASE_URL is not set');
-//     }
-//     // Creamos un cliente de Prisma que apunta a la BD de test
-//     prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+  beforeAll(() => {
+    // Usamos la utilidad para crear el cliente de Prisma
+    prismaClient = TestDatabaseUtils.createTestPrismaClient();
+    userRepository = new PrismaUserRepository(prismaClient);
+  });
 
-//     // Instanciamos la implementación que vamos a probar
-//     userRepository = new PrismaUserRepository(prisma);
-//   });
+  // Usamos la utilidad para limpiar la base de datos
+  beforeEach(async () => {
+    await TestDatabaseUtils.cleanDatabase(prismaClient);
+  });
 
-//   // Limpiamos la tabla de usuarios antes de cada test para asegurar el aislamiento
-//   beforeEach(async () => {
-//     await prisma.user.deleteMany();
-//   });
+  afterAll(async () => {
+    // Usamos la utilidad para desconectar
+    await TestDatabaseUtils.disconnectPrismaClient(prismaClient);
+  });
 
-//   afterAll(async () => {
-//     // Nos desconectamos de la base de datos de prueba al final
-//     await prisma.$disconnect();
-//   });
+  describe('create', () => {
+    it('debería crear un nuevo usuario y retornarlo', async () => {
+      const userData = {
+        id: uuidv4(),
+        email: 'test@example.com',
+        passwordHash:
+          '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O',
+        role: 'student' as const,
+      };
 
-//   describe('create', () => {
-//     it('should create a new user and return it', async () => {
-//       // --- Preparación (Arrange) ---
-//       const userData = {
-//         id: uuidv4(),
-//         email: 'test@example.com',
-//         passwordHash: 'hashed_password',
-//         role: 'student' as const,
-//       };
+      const createdUser = await userRepository.create(userData);
 
-//       // --- Ejecución (Act) ---
-//       const createdUser = await userRepository.create(userData);
+      expect(createdUser).toBeDefined();
+      expect(createdUser.id).toBe(userData.id);
+      expect(createdUser.email).toBe(userData.email);
 
-//       // --- Aserción (Assert) ---
-//       expect(createdUser).toBeDefined();
-//       expect(createdUser.id).toBe(userData.id);
-//       expect(createdUser.email).toBe(userData.email);
-
-//       // Verificamos que el usuario realmente existe en la BD
-//       const userInDb = await prisma.user.findUnique({ where: { id: userData.id } });
-//       expect(userInDb).not.toBeNull();
-//       expect(userInDb?.email).toBe(userData.email);
-//     });
-//   });
-// });
+      const userInDb = await prismaClient.user.findUnique({
+        where: { id: userData.id },
+      });
+      expect(userInDb).not.toBeNull();
+      expect(userInDb?.email).toBe(userData.email);
+    });
+  });
+});

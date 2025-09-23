@@ -4,6 +4,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -12,6 +13,7 @@ datasource db {
 }
 
 // Modelo de Usuario simplificado para el inicio del TDD
+// Delega prisma.user en la app
 model User {
   // --- Campos Esenciales ---
   id           String   @id // Vamos a usar UUID pero lo generamos en la app para no depender de la BD

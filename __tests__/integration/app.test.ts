@@ -1,7 +1,7 @@
 // __tests__/integration/app.test.ts
 
 import supertest from 'supertest';
-import app from '@/infrastructure/web/app.js';
+import app from '@/infrastructure/web/app';
 
 const request = supertest(app);
 

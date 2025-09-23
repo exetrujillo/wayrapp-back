@@ -1,7 +1,7 @@
 // src/infrastructure/database/config/prisma.config.ts
 
 import { PrismaClient } from '@prisma/client';
-import { config } from '../../config/environment.js';
+import { config } from '@/infrastructure/config/environment';
 
 /**
  * Crea y configura una instancia de PrismaClient para la aplicación.

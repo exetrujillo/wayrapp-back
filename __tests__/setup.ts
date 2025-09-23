@@ -1,15 +1,20 @@
 // __tests__/setup.ts
 
 /**
- * Módulo de configuración global para el entorno de pruebas de Jest.
+ * Archivo de configuración de entorno para las suites de tests de integración.
  *
- * Este archivo es responsable de gestionar el ciclo de vida de los servicios externos
- * necesarios para las pruebas de integración, como las bases de datos. Utiliza
- * Testcontainers para crear y destruir dinámicamente contenedores Docker efímeros,
- * garantizando un entorno de prueba limpio y aislado para cada ejecución.
+ * Este script utiliza los hooks `beforeAll` y `afterAll` de Jest para gestionar
+ * el ciclo de vida de un contenedor de base de datos efímero usando Testcontainers.
  *
- * La base de datos a utilizar (PostgreSQL, MySQL, MongoDB) se selecciona mediante
- * la variable de entorno `TEST_DB_TYPE`.
+ * - `beforeAll`: Se ejecuta una vez antes de todos los tests en una suite (archivo).
+ *   Se encarga de levantar un contenedor de base de datos, aplicar las migraciones
+ *   de Prisma y preparar el entorno para las pruebas.
+ *
+ * - `afterAll`: Se ejecuta una vez después de que todos los tests en la suite han
+ *   terminado. Se encarga de detener y destruir el contenedor para limpiar los recursos.
+ *
+ * Este enfoque garantiza que cada suite de tests se ejecute en una base de datos
+ * completamente aislada y limpia.
  *
  * @module TestSetup
  * @category Testing
@@ -26,109 +31,109 @@ import {
   MongoDBContainer,
   StartedMongoDBContainer,
 } from '@testcontainers/mongodb';
-import { exec } from 'child_process'; // Importamos para poder ejecutar comandos de shell desde Node.js
-import { promisify } from 'util'; // Importamos para poder usar 'exec' con async/await
+import { PrismaClient } from '@prisma/client';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-const execAsync = promisify(exec); // Creamos una versión de 'exec' que retorna Promise.
+const execAsync = promisify(exec);
 
-// Definimos un tipo que representa cualquiera de los contenedores que podemos iniciar
 type SupportedContainer =
   | StartedPostgreSqlContainer
   | StartedMySqlContainer
   | StartedMongoDBContainer;
 
-// Extendemos el objeto global de Node.js para declarar de forma segura
-// una variable global que usaremos para pasar la referencia del contenedor
-// desde la función 'setup' a la función 'teardown'
-declare global {
-  var __TESTCONTAINER__: SupportedContainer;
-}
+let container: SupportedContainer;
 
 /**
- * Función de configuración global (`globalSetup`) para Jest.
- * Se ejecuta UNA VEZ antes de que comiencen todas las suites de pruebas.
- * Se usa en jest.config.js y jest.integration.config.js
+ * Utilidades para tests de integración que pueden ser reutilizadas
+ * por diferentes suites de tests.
  */
-const setup = async () => {
-  // 1. Determinar qué base de datos usar, basándose en la variable de entorno.
-  //    Si no se especifica, se usa PostgreSQL por defecto
+export class TestDatabaseUtils {
+  /**
+   * Crea un cliente de Prisma configurado para usar la URL de test
+   * que se establece dinámicamente por Testcontainers.
+   */
+  static createTestPrismaClient(): PrismaClient {
+    if (!process.env.TEST_DATABASE_URL) {
+      throw new Error(
+        'TEST_DATABASE_URL not set. Make sure the test container is running.'
+      );
+    }
+
+    return new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.TEST_DATABASE_URL,
+        },
+      },
+    });
+  }
+
+  /**
+   * Limpia todas las tablas de la base de datos de test.
+   * Útil para el beforeEach de los tests de integración.
+   */
+  static async cleanDatabase(prismaClient: PrismaClient): Promise<void> {
+    // Limpiamos en orden inverso de dependencias para evitar errores de FK
+    await prismaClient.user.deleteMany();
+    // Aquí agregaremos más tablas conforme las vayamos creando
+  }
+
+  /**
+   * Desconecta el cliente de Prisma de forma segura.
+   * Útil para el afterAll de los tests de integración.
+   */
+  static async disconnectPrismaClient(
+    prismaClient: PrismaClient
+  ): Promise<void> {
+    await prismaClient.$disconnect();
+  }
+}
+
+// Aumentamos el timeout de Jest para dar tiempo a que el contenedor arranque.
+jest.setTimeout(60000);
+
+beforeAll(async () => {
   const dbType = process.env.TEST_DB_TYPE || 'postgres';
-  console.log(`\nSetteando Testcontainer para: ${dbType}`);
+  console.log(`\nSetting up Testcontainer for: ${dbType}`);
 
-  let container: SupportedContainer;
-  let connectionUri: string;
-
-  // 2. Iniciar el contenedor Docker correspondiente según el dbType
   switch (dbType) {
     case 'postgres':
       container = await new PostgreSqlContainer('postgres:17.3-alpine').start();
-      connectionUri = container.getConnectionUri();
+      process.env.TEST_DATABASE_URL = container.getConnectionUri();
       break;
-
     case 'mysql':
       container = await new MySqlContainer('mysql:8.4')
         .withUser('testuser')
         .withRootPassword('testpass')
         .withDatabase('testdb')
         .start();
-      connectionUri = container.getConnectionUri();
+      process.env.TEST_DATABASE_URL = container.getConnectionUri();
       break;
-
     case 'mongodb':
       container = await new MongoDBContainer('mongo:8.0').start();
-      connectionUri = container.getConnectionString();
+      process.env.TEST_DATABASE_URL = container.getConnectionString();
       break;
-
     default:
-      throw new Error(`No hay soporte para TEST_DB_TYPE: ${dbType}`);
+      throw new Error(`TEST_DB_TYPE no soportado: ${dbType}`);
   }
 
-  // 3. Almacenar la URL de conexión del contenedor en una variable de entorno.
-  //    Nuestra aplicación (y Prisma Client) leerá esta variable para saber a qué
-  //    base de datos efímera debe conectarse durante los tests
-  process.env.TEST_DATABASE_URL = connectionUri;
+  console.log(`Iniciado el container de tipo ${dbType}.`);
+  console.log(`URL de conexión: ${process.env.TEST_DATABASE_URL}`);
 
-  // 4. Guardar la referencia al contenedor iniciado en nuestra variable global
-  //    para que la función 'teardown' pueda encontrarlo y detenerlo
-  global.__TESTCONTAINER__ = container;
-
-  console.log(`${dbType} container iniciado.`);
-  console.log(`URL de conexión: ${connectionUri}`);
-
-  // 5. Aplicar las migraciones de la base de datos (solo para SQL)
-  //    Esto asegura que la base de datos efímera tenga la estructura de tablas correcta
   if (dbType === 'postgres' || dbType === 'mysql') {
-    console.log('Corriendo migraciones de la base de datos...');
-
-    await execAsync('npx prisma migrate deploy', {
-      env: {
-        ...process.env, // Hereda el entorno actual (importante para encontrar 'npx')
-        // Establece la URL de la base de datos que usará el comando 'migrate'
-        DATABASE_URL_POSTGRES: connectionUri,
-        // Y las otras URLs con valores ficticios para satisfacer la validación del esquema
-        DATABASE_URL_MYSQL: 'mysql://dummy:dummy@dummy:3306/dummy',
-        DATABASE_URL_MONGO: 'mongodb://dummy:dummy@dummy:27017/dummy',
-      },
-    });
-
-    console.log('Migraciones aplicadas correctamente.');
+    console.log('Corriendo las migraciones de bases de datos...');
+    await execAsync(
+      `cross-env DATABASE_URL_POSTGRES=${process.env.TEST_DATABASE_URL} npx prisma migrate deploy`
+    );
+    console.log('Migraciones aplicadas exitosamente.');
   }
-};
+});
 
-// Exportamos 'setup' como la exportación por defecto, que es lo que Jest
-// buscará para la propiedad 'globalSetup'
-export default setup;
-
-/**
- * Función de limpieza global (`globalTeardown`) para Jest.
- * Se ejecuta UNA VEZ después de que han terminado todas las suites de pruebas.
- */
-export const teardown = async () => {
-  const dbType = process.env.TEST_DB_TYPE || 'postgres';
-  console.log(`\nTearing down Testcontainer for: ${dbType}`);
-
-  if (global.__TESTCONTAINER__) {
-    await global.__TESTCONTAINER__.stop();
-    console.log(`${dbType} container stopped.`);
+afterAll(async () => {
+  console.log('\nDestruyendo Testcontainer...');
+  if (container) {
+    await container.stop();
+    console.log('Testcontainer detenido.');
   }
-};
+});
