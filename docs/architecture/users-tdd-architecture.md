@@ -8,83 +8,108 @@ Este documento describe la arquitectura de Desarrollo Dirigido por Pruebas (TDD)
 
 ```mermaid
 graph TD
-    %% Phase 1: Core Interfaces & Contracts
-    A[Define Core Interfaces] --> B[IUserRepository Interface]
-    B --> C[User Entity and Value Objects]
-    C --> D[Contract Tests]
+    %% TDD Cycle: RED - GREEN - REFACTOR
     
-    %% Contract Testing Layer
+    %% Phase 1: Domain Design (Interface First)
+    A[Define Domain Interfaces] --> B[IUserRepository Interface]
+    B --> C[User Entity Contracts]
+    
+    %% Phase 2: Contract Tests (RED)
+    C --> D[Write Contract Tests FIRST]
     D --> E[IUserRepository Contract Test]
-    E --> F[Test Suite Functions]
-    F --> G[makeUserRepositoryContractTest]
+    E --> F[makeUserRepositoryContractTest]
+    F --> G[Tests FAIL - RED State]
     
-    %% Phase 2: Database Implementations
-    G --> H[Database Adapters]
-    H --> I[PostgreSQL with Prisma]
-    H --> J[MySQL with TypeORM]
-    H --> K[MongoDB with Mongoose]
+    %% Phase 3: First Implementation (GREEN)
+    G --> H[Implement PostgreSQL Repository]
+    H --> I[PrismaUserRepository Implementation]
+    I --> J[Integration Test PostgreSQL]
+    J --> K[Tests PASS - GREEN State]
     
-    %% Integration Tests
-    I --> L[UserRepository PostgreSQL Test]
-    J --> M[UserRepository MySQL Test]
-    K --> N[UserRepository MongoDB Test]
+    %% Phase 4: Refactor & Extend (REFACTOR)
+    K --> L[Refactor Implementation]
+    L --> M[Add MySQL Implementation]
+    M --> N[TypeORMUserRepository]
+    N --> O[Integration Test MySQL]
     
-    %% Phase 3: Service Layer
-    L --> O[User Service Layer]
-    M --> O
-    N --> O
-    O --> P[UserService with DI]
-    P --> Q[Use Cases Implementation]
+    %% Phase 5: MongoDB Extension (TDD Cycle)
+    O --> P[Add MongoDB Implementation]
+    P --> Q[MongoUserRepository]
+    Q --> R[Integration Test MongoDB]
     
-    %% Phase 4: API Layer
-    Q --> R[DTOs and Validation]
-    R --> S[Zod Schemas]
-    S --> T[HTTP Controllers]
-    T --> U[Express Routes]
+    %% Phase 6: Service Layer TDD
+    R --> S[Write Service Tests FIRST]
+    S --> T[UserService Test Suite]
+    T --> U[Use Cases Tests]
+    U --> V[Implement UserService]
+    V --> W[Implement Use Cases]
     
-    %% Phase 5: Factory Pattern
-    U --> V[Database Factory]
-    V --> W[Repository Factory]
-    W --> X[Configuration Driven Selection]
+    %% Phase 7: API Layer TDD
+    W --> X[Write Controller Tests FIRST]
+    X --> Y[API Integration Tests]
+    Y --> Z[DTOs and Validation Tests]
+    Z --> AA[Implement Controllers]
+    AA --> BB[Implement DTOs and Schemas]
     
-    %% Testing Strategy
-    X --> Y[Multi-DB Testing]
-    Y --> Z[CI/CD Pipeline]
+    %% Phase 8: Factory Pattern TDD
+    BB --> CC[Write Factory Tests FIRST]
+    CC --> DD[Database Factory Tests]
+    DD --> EE[Implement Database Factory]
+    EE --> FF[Configuration Tests]
+    FF --> GG[Multi-DB CI/CD Pipeline]
     
-    %% Styling
-    classDef coreLayer fill:#e1f5fe,color:#000000
-    classDef testLayer fill:#f3e5f5,color:#000000
-    classDef dbLayer fill:#e8f5e8,color:#000000
-    classDef serviceLayer fill:#fff3e0,color:#000000
-    classDef apiLayer fill:#fce4ec,color:#000000
+    %% Styling - TDD Colors
+    classDef redPhase fill:#ffebee,color:#000000,stroke:#d32f2f,stroke-width:2px
+    classDef greenPhase fill:#e8f5e8,color:#000000,stroke:#388e3c,stroke-width:2px
+    classDef refactorPhase fill:#fff3e0,color:#000000,stroke:#f57c00,stroke-width:2px
+    classDef interfacePhase fill:#e3f2fd,color:#000000,stroke:#1976d2,stroke-width:2px
     
-    class A,B,C coreLayer
-    class D,E,F,G,L,M,N,Y,Z testLayer
-    class H,I,J,K,V,W,X dbLayer
-    class O,P,Q serviceLayer
-    class R,S,T,U apiLayer
+    class A,B,C interfacePhase
+    class D,E,F,G,S,T,U,X,Y,Z,CC,DD,FF redPhase
+    class H,I,J,K,M,N,O,P,Q,R,V,W,AA,BB,EE,GG greenPhase
+    class L refactorPhase
 ```
 
-## Fases de Implementación
+## Fases de Implementación TDD
 
-### Fase 1: Dominio Central e Interfaces
+### Fase 1: Diseño de Interfaces (Interface First)
 
-#### 1.1 Entidades de Dominio
+#### 1.1 ✅ Entidades de Dominio
 ```typescript
 // src/core/domain/entities/User.ts
 export class User {
   constructor(
     public readonly id: string,
     public readonly email: Email,
-    public readonly passwordHash: string,
-    public readonly role: UserRole,
+    public readonly passwordHash: HashedPassword,
+    public readonly role: Role,
     public readonly createdAt: Date,
     public readonly updatedAt: Date
-  ) {}
+  ) {
+    this.validateConstructorParams();
+  }
+
+  // Métodos de utilidad implementados
+  canCreateContent(): boolean { return this.role.canCreateContent(); }
+  hasAdminPrivileges(): boolean { return this.role.hasAdminPrivileges(); }
+  isStudent(): boolean { return this.role.isStudent(); }
+  isContentCreator(): boolean { return this.role.isContentCreator(); }
+  isAdmin(): boolean { return this.role.isAdmin(); }
+  
+  // Getters para APIs
+  getEmailValue(): string { return this.email.value; }
+  getRoleValue(): string { return this.role.value; }
+  getPasswordHashValue(): string { return this.passwordHash.value; }
 }
 ```
 
-#### 1.2 Interface del Repository
+**Value Objects Implementados:**
+- ✅ `Email`: Validación de formato de email
+- ✅ `HashedPassword`: Validación de hash bcrypt
+- ✅ `PlainPassword`: Validación de contraseña plana con reglas de fortaleza
+- ✅ `Role`: Roles de usuario con métodos de autorización
+
+#### 1.2 ✅ Interface del Repository
 ```typescript
 // src/core/interfaces/repositories/IUserRepository.ts
 export interface IUserRepository {
@@ -94,11 +119,23 @@ export interface IUserRepository {
   update(id: string, updateData: UpdateUserData): Promise<User | null>;
   delete(id: string): Promise<void>;
 }
+
+export interface CreateUserData {
+  email: string;
+  passwordHash: string;
+  role: string;
+}
+
+export interface UpdateUserData {
+  email?: string;
+  passwordHash?: string;
+  role?: string;
+}
 ```
 
-### Fase 2: Testing de Contratos
+### Fase 2: Tests de Contrato PRIMERO (RED)
 
-#### 2.1 Suite de Tests de Contrato
+#### 2.1 Escribir Tests ANTES de Implementar
 ```typescript
 // src/core/interfaces/repositories/__tests__/IUserRepository.contract.test.ts
 export function makeUserRepositoryContractTest(
@@ -114,9 +151,9 @@ export function makeUserRepositoryContractTest(
 }
 ```
 
-### Fase 3: Implementaciones de Base de Datos
+### Fase 3: Primera Implementación (GREEN)
 
-#### 3.1 Implementación PostgreSQL
+#### 3.1 Implementar PostgreSQL para Pasar Tests
 ```typescript
 // src/infrastructure/database/adapters/prisma/repositories/PrismaUserRepository.ts
 export class PrismaUserRepository implements IUserRepository {
@@ -232,30 +269,93 @@ strategy:
     node-version: [22.x]
 ```
 
+## Principios TDD Aplicados
+
+### Ciclo Red-Green-Refactor
+
+1. **🔴 RED**: Escribir un test que falle
+   - Definir el comportamiento esperado ANTES de implementar
+   - Los tests actúan como especificación ejecutable
+   - Garantiza que el test realmente valida la funcionalidad
+
+2. **🟢 GREEN**: Escribir el código mínimo para pasar el test
+   - Implementar solo lo necesario para que el test pase
+   - No optimizar prematuramente
+   - Enfocarse en hacer que funcione
+
+3. **🟡 REFACTOR**: Mejorar el código sin cambiar funcionalidad
+   - Limpiar el código manteniendo los tests verdes
+   - Aplicar patrones de diseño
+   - Optimizar performance si es necesario
+
+### Aplicación en Nuestro Proyecto
+
+- **Tests de Contrato**: Definen el comportamiento que TODAS las implementaciones deben cumplir
+- **Implementación Incremental**: Cada nueva BD usa los mismos tests (PostgreSQL → MySQL → MongoDB)
+- **Validación Continua**: Los tests garantizan que todas las implementaciones son intercambiables
+
 ## Beneficios Clave
 
-1. **Agnóstico de Base de Datos**: Cambiar entre bases de datos sin modificar la lógica de negocio
-2. **Cumplimiento de Contratos**: Todas las implementaciones garantizadas para funcionar de la misma manera
-3. **Enfoque TDD**: Los tests dirigen el diseño y aseguran la calidad
-4. **Arquitectura Limpia**: Separación clara de responsabilidades
-5. **Escalable**: Fácil agregar nuevas implementaciones de base de datos
+1. **TDD Auténtico**: Tests escritos ANTES que implementaciones, dirigiendo el diseño
+2. **Agnóstico de Base de Datos**: Cambiar entre bases de datos sin modificar la lógica de negocio
+3. **Cumplimiento de Contratos**: Todas las implementaciones garantizadas para funcionar de la misma manera
+4. **Calidad por Diseño**: Los tests actúan como especificación ejecutable
+5. **Refactoring Seguro**: Cambios con confianza gracias a la cobertura de tests
+6. **Arquitectura Limpia**: Separación clara de responsabilidades
+7. **Escalable**: Fácil agregar nuevas implementaciones siguiendo el mismo patrón TDD
 
-## Orden de Implementación
+## Orden de Implementación TDD (Red-Green-Refactor)
 
-1. ✅ Definir interfaces centrales y entidades
-2. ✅ Crear suite de tests de contrato
-3. ⌛ Implementar adaptador PostgreSQL (Prisma)
-4. 🔄 Implementar adaptador MySQL (TypeORM)
-5. 🔄 Implementar adaptador MongoDB (Mongoose)
-6. 🔄 Crear capa de servicios con inyección de dependencias
-7. 🔄 Construir capa de API con validación
-8. 🔄 Implementar patrón factory
-9. 🔄 Configurar CI/CD con testing multi-base de datos
+### Ciclo 1: Repository Layer
+1. ✅ **RED**: Definir interfaces y escribir tests de contrato (IMPLEMENTADO)
+2. ✅ **RED**: Crear suite de tests que debe pasar cualquier implementación (IMPLEMENTADO)
+3. ⌛ **GREEN**: Implementar PostgreSQL (Prisma) para pasar tests (EN PROGRESO)
+4. 🔄 **REFACTOR**: Mejorar implementación PostgreSQL
+5. 🔄 **GREEN**: Implementar MySQL (TypeORM) usando mismos tests
+6. 🔄 **GREEN**: Implementar MongoDB (Mongoose) usando mismos tests
 
-## Próximos Pasos
+**Estado Actual del Domain Layer:**
+- ✅ User entity con validaciones completas
+- ✅ Value objects: Email, Password (Plain/Hashed), Role
+- ✅ IUserRepository interface definida
+- ✅ Tests unitarios para User entity
+- ✅ Tests de contrato para IUserRepository preparados
 
-- Completar la implementación de PostgreSQL siguiendo los tests de contrato
-- Extender a implementaciones de MySQL y MongoDB
-- Implementar la capa de servicios con inyección de dependencias apropiada
+### Ciclo 2: Service Layer
+7. 🔄 **RED**: Escribir tests de servicios y casos de uso PRIMERO
+8. 🔄 **GREEN**: Implementar servicios para pasar tests
+9. 🔄 **REFACTOR**: Optimizar inyección de dependencias
+
+### Ciclo 3: API Layer
+10. 🔄 **RED**: Escribir tests de controladores y validación PRIMERO
+11. 🔄 **GREEN**: Implementar controladores y DTOs para pasar tests
+12. 🔄 **REFACTOR**: Optimizar validación con Zod
+
+### Ciclo 4: Factory Pattern
+13. 🔄 **RED**: Escribir tests de factory pattern PRIMERO
+14. 🔄 **GREEN**: Implementar factory para pasar tests
+15. 🔄 **REFACTOR**: Configurar CI/CD con testing multi-base de datos
+
+## Próximos Pasos Inmediatos
+
+### Fase Actual: Implementación Repository Layer (GREEN)
+1. **Implementar PrismaUserRepository** para pasar los tests de contrato existentes
+2. **Configurar Prisma schema** para la entidad User con value objects
+3. **Crear tests de integración** con Testcontainers para PostgreSQL
+4. **Validar que todos los tests pasan** (GREEN state)
+
+### Siguientes Fases:
+- Extender a implementaciones de MySQL (TypeORM) y MongoDB (Mongoose)
+- Implementar la capa de servicios con inyección de dependencias
+- Crear DTOs y validación con Zod
+- Implementar controladores HTTP
+- Configurar Factory pattern para selección de BD
 - Crear documentación completa de la API
 - Configurar benchmarking de performance entre bases de datos
+
+### Estado del Proyecto:
+- ✅ **Domain Layer**: Completamente implementado con TDD
+- ⌛ **Repository Layer**: Interfaces definidas, implementaciones pendientes
+- 🔄 **Service Layer**: Pendiente
+- 🔄 **API Layer**: Pendiente
+- 🔄 **Factory Pattern**: Pendiente

@@ -62,6 +62,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "express": "^5.1.0",
     "uuid": "^13.0.0",
     "zod": "^4.1.9",

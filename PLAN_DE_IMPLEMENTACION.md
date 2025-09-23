@@ -42,10 +42,16 @@
   - ✅ No requiere archivos docker-compose.test.yml o Dockerfile.test, simplificando la configuración de la infraestructura
   - ✅ La configuración del entorno de testing vive junto al código de los tests, haciéndola más explícita y fácil de mantener
 
-### 4. Estructura de carpetas
+### 4. ⌛ Estructura de carpetas
 
 - ✅ `src/core/`: Lógica de negocio pura (domain, interfaces, use-cases)
+  - ✅ `src/core/domain/entities/`: User entity implementada
+  - ✅ `src/core/domain/value-objects/`: Email, Password, Role implementados
+  - ✅ `src/core/interfaces/repositories/`: IUserRepository implementado
 - ✅ `src/infrastructure/`: Implementaciones técnicas (database adapters, web, external services)
+  - ✅ `src/infrastructure/config/`: Environment configuration
+  - ✅ `src/infrastructure/web/`: Express app setup
+  - ✅ `src/infrastructure/database/`: Database adapters structure
 - 😒 `src/modules/`: Features organizados por dominio (auth, users, content, progress)
 - 😒 `src/shared/`: Utilidades compartidas y tipos globales
 
@@ -71,11 +77,11 @@ wayrapp-back/
 │   ├── core/                           # ✅ Lógica de negocio pura (Clean Architecture)
 │   │   ├── domain/                     # ✅ Entidades de dominio
 │   │   │   ├── entities/               # ✅ User, Course, Level, Section, Module, Lesson, Exercise
-│   │   │   ├── value-objects/          # Email, Password, XP, Streak
+│   │   │   ├── value-objects/          # ✅ Email, Password, XP, Streak
 │   │   │   └── events/                 # Domain events (UserRegistered, LessonCompleted)
 │   │   ├── interfaces/                 # ✅ Contratos abstractos
 │   │   │   ├── repositories/           # ✅ IUserRepository, ICourseRepository, IProgressRepository
-│   │   │   ├── services/               # IAuthService, IContentService, IProgressService
+│   │   │   ├── services/               # ✅ IPasswordService, IAuthService, IContentService, IProgressService
 │   │   │   ├── gateways/               # IEmailGateway, IFileGateway, ICacheGateway
 │   │   │   └── use-cases/              # Interfaces de casos de uso
 │   │   └── use-cases/                  # Lógica de aplicación
@@ -109,6 +115,7 @@ wayrapp-back/
 │   │   │       ├── prisma.config.ts    # ✅ Config Prisma
 │   │   │       ├── typeorm.config.ts   # Config TypeORM
 │   │   │       └── mongoose.config.ts  # Config Mongoose
+│   │   ├── services/                   # ✅ Servicios de infraestructura (PasswordService, EmailService, etc.)
 │   │   ├── web/                        # ✅ HTTP/Express
 │   │   │   ├── controllers/            # HTTP controllers
 │   │   │   ├── middleware/             # Express middleware (auth, validation, security)
@@ -124,13 +131,12 @@ wayrapp-back/
 │   │       ├── container.ts            # DI Container (tsyringe)
 │   │       └── logger.ts               # Logging config (Winston)
 │   │
-│   ├── modules/                        # Organización por features
+│   ├── modules/                        # ✅ Organización por features
 │   │   ├── auth/                       # Módulo de autenticación
 │   │   │   ├── controllers/            # AuthController
 │   │   │   ├── services/               # AuthService
 │   │   │   ├── dto/                    # LoginDto, RegisterDto, RefreshTokenDto
-│   │   │   ├── validators/             # Zod schemas para auth
-│   │   │   └── __tests__/              # Tests del módulo auth
+│   │   │   └── validators/             # Zod schemas para auth
 │   │   ├── users/                      # Módulo de usuarios
 │   │   │   ├── controllers/            # UserController
 │   │   │   ├── services/               # UserService
@@ -215,12 +221,15 @@ wayrapp-back/
 
 **Objetivo: Implementar el patrón Repository agnóstico con soporte multi-BD**
 
-### 7. Definir interfaces base
+### 7. ⌛ Definir interfaces base
 
-- Crear interfaces de Repository abstractas para User, Course, Progress
-- Definir DTOs independientes del ORM (sin dependencias de Prisma/TypeORM/Mongoose)
-- Establecer contratos de servicios con inyección de dependencias
-- Definir interfaces para gateways externos (email, storage, cache)
+- ✅ Crear interfaces de Repository abstractas para User (IUserRepository implementado)
+- 😒 Crear interfaces de Repository para Course, Progress
+- 😒 Definir DTOs independientes del ORM (sin dependencias de Prisma/TypeORM/Mongoose)
+- ✅ Establecer contratos de servicios con inyección de dependencias
+  - ✅ IPasswordService implementado en `src/core/interfaces/services/`
+  - ✅ PasswordService implementado en `src/infrastructure/services/`
+- 😒 Definir interfaces para gateways externos (email, storage, cache)
 
 ### 8. Implementar Factory Pattern multi-BD
 
@@ -239,12 +248,17 @@ wayrapp-back/
 
 **Implementar el primer módulo completo validando el diseño agnóstico**
 
-### 10. TDD para User Domain
+### 10. ✅ TDD para User Domain
 
-- Tests para entidades User con value objects (Email, Password)
-- Implementar User entity con validaciones de dominio
-- Tests para User repository interface con los 3 tipos de BD
-- Domain events para acciones de usuario (UserRegistered, ProfileUpdated)
+- ✅ Tests para entidades User con value objects (Email, Password, Role)
+- ✅ Implementar User entity con validaciones de dominio y métodos de utilidad
+- ✅ Tests para User repository interface con los 3 tipos de BD
+- ✅ Value objects implementados: Email, Password (PlainPassword/HashedPassword), Role
+- ✅ Password hashing con bcrypt real (no hardcoded)
+  - ✅ IPasswordService con contrato claro
+  - ✅ PasswordService con implementación bcrypt
+  - ✅ Tests completos con casos de seguridad
+- 😒 Domain events para acciones de usuario (UserRegistered, ProfileUpdated)
 
 ### 11. TDD para User Repository multi-BD
 
@@ -374,3 +388,58 @@ wayrapp-back/
 - **DI**: tsyringe
 - **Database**: Prisma v6.16.0 + TypeORM 0.3.26 + Mongoose 8.x
 - **HTTP**: Express 5.1 + Helmet + CORS
+- **Security**: bcrypt para password hashing
+
+## Estado Actual de Implementación
+
+### ✅ Completado (Fase 1-3 Parcial)
+
+#### **Configuración Base**
+- ✅ Proyecto inicializado con Node.js v22.19.0 y TypeScript 5.9.2
+- ✅ Jest configurado para testing unitario e integración
+- ✅ Testcontainers configurado para aislamiento de BD
+- ✅ Docker Compose para desarrollo
+- ✅ ESLint, Prettier y Husky configurados
+
+#### **Domain Layer**
+- ✅ User entity implementada con validaciones completas
+- ✅ Value objects: Email, Password (PlainPassword/HashedPassword), Role
+- ✅ IUserRepository interface definida
+- ✅ IPasswordService interface definida
+
+#### **Infrastructure Layer**
+- ✅ PasswordService implementado con bcrypt real
+- ✅ Configuración de base de datos (Prisma)
+- ✅ Express app setup básico
+
+#### **Testing**
+- ✅ 108 tests pasando (100% success rate)
+- ✅ Tests unitarios para value objects y entidades
+- ✅ Tests de integración para PasswordService
+- ✅ Tests de ejemplo para flujos de autenticación
+- ✅ Tests con bcrypt real (no mocks ni hardcoded)
+
+#### **Estructura de Carpetas**
+```
+src/
+├── core/
+│   ├── domain/
+│   │   ├── entities/User.ts ✅
+│   │   └── value-objects/ ✅
+│   └── interfaces/
+│       ├── repositories/IUserRepository.ts ✅
+│       └── services/IPasswordService.ts ✅
+├── infrastructure/
+│   ├── database/adapters/prisma/ ✅
+│   ├── services/PasswordService.ts ✅
+│   └── web/app.ts ✅
+└── modules/
+    └── auth/__tests__/ ✅
+```
+
+### 🎯 Próximo Paso Recomendado
+
+**Fase 2, Punto 8**: Implementar Factory Pattern multi-BD
+- Crear DatabaseFactory para PostgreSQL, MySQL y MongoDB
+- Implementar Repository Factory pattern
+- Configuration-driven database selection
