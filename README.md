@@ -13,7 +13,7 @@ Backend para la aplicación de aprendizaje de idiomas WayrApp. Diseñado con una
 
 ---
 
-## 🚀 Puesta en Marcha
+## 🚀 Comencemos!
 
 Sigue estos pasos para levantar el entorno de desarrollo completo.
 
@@ -32,11 +32,9 @@ Crea tu archivo de entorno local a partir de la plantilla.
 cp .env.example .env
 ```
 
-**Importante:** El archivo `.env` contiene información sensible y está ignorado por Git. **Nunca lo subas al repositorio.**
-
 ### 3. Instalar Dependencias Locales
 
-Este paso es crucial para que tu editor de código (VSCode, etc.) reconozca los módulos y te proporcione autocompletado y detección de errores.
+Este paso es crucial para que tu editor de código (VSCode, etc.) reconozca los módulos y te proporcione autocompletado y detección de errores. También para que no te llene de falsos errores por falta de dependencias.
 
 ```bash
 npm install
