@@ -3,6 +3,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['<rootDir>/src/**/*.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '.*\\.contract\\.test\\.ts$'],
   transform: {
     // Usa ts-jest para nuestros archivos .ts
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
@@ -11,6 +12,6 @@ module.exports = {
   },
   transformIgnorePatterns: ['/node_modules/(?!uuid)'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
-  }
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
 };

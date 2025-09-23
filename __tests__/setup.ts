@@ -56,7 +56,7 @@ export class TestDatabaseUtils {
   static createTestPrismaClient(): PrismaClient {
     if (!process.env.TEST_DATABASE_URL) {
       throw new Error(
-        'TEST_DATABASE_URL not set. Make sure the test container is running.'
+        'TEST_DATABASE_URL no seteado. Asegúrate de que el test container esté corriendo.'
       );
     }
 
@@ -95,7 +95,7 @@ jest.setTimeout(60000);
 
 beforeAll(async () => {
   const dbType = process.env.TEST_DB_TYPE || 'postgres';
-  console.log(`\nSetting up Testcontainer for: ${dbType}`);
+  console.log(`\nSeteando Testcontainer para: ${dbType}`);
 
   switch (dbType) {
     case 'postgres':

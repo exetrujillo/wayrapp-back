@@ -12,7 +12,7 @@
 
 ### 2. ✅ Configuración de Testing
 
-- ✅ Jest v30.x (CJS).
+- ✅ Jest v29.x (CJS).
 - ✅ Supertest para test de integración HTTP
 - ✅ Testcontainers para aislamiento completo de las bases de datos en tests
 - ✅ Configuración de Husky integrada con pipeline de testing (pre-commit para los tests)
