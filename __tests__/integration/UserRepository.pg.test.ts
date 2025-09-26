@@ -1,17 +1,17 @@
 // __tests__/integration/postgresql/UserRepository.pg.test.ts
 
-import { PrismaUserRepository } from '@/infrastructure/database/adapters/prisma/repositories/PrismaUserRepository';
-import { TestDatabaseUtils } from '../../setup';
+import { UserRepository } from '@/infrastructure/database/adapters/prisma/repositories/UserRepository';
+import { TestDatabaseUtils } from '../setup';
 // Importa la función de test de contrato
 import { makeUserRepositoryContractTest } from '@/core/interfaces/repositories/__tests__/IUserRepository.contract.test';
 
 // Llama a la función de test de contrato, pasándole la implementación de Prisma
 makeUserRepositoryContractTest(
-  'PrismaUserRepository Integration Tests - Contract', // Descripción clara
+  'UserRepository Integration Tests - Contract', // Descripción clara
   () => {
     // Esta función configura el repositorio para el test de contrato
     const prismaClient = TestDatabaseUtils.createTestPrismaClient();
-    const userRepository = new PrismaUserRepository(prismaClient);
+    const userRepository = new UserRepository(prismaClient);
 
     return {
       repository: userRepository,

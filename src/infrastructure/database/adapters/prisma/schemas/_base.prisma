@@ -1,12 +1,4 @@
-generator client {
-  provider = "prisma-client-js"
-  output   = "../../../node_modules/.prisma/client"
-}
-
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL_MYSQL")
-}// WayrApp Database Schema
+// WayrApp Database Schema
 // Author: Exequiel Trujillo
 // Schema para la plataforma de aprendizaje de lenguas - En desarrollo
 

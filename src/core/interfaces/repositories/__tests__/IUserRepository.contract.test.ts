@@ -2,12 +2,16 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { IUserRepository } from '../IUserRepository';
+import { User } from '@/core/domain/entities/User';
+import { Email } from '@/core/domain/value-objects/Email';
+import { HashedPassword } from '@/core/domain/value-objects/Password';
+import { Role } from '@/core/domain/value-objects/Role';
 
 /**
  * Función de test de contrato para IUserRepository.
  * Cualquier implementación de IUserRepository debe pasar estos tests.
  *
- * @param description Descripción de la suite de tests (ej. "PrismaUserRepository Contract")
+ * @param description Descripción de la suite de tests (ej. "UserRepository Contract")
  * @param setupRepository Función que devuelve una instancia de IUserRepository y funciones de utilidad.
  * @param teardownRepository Función para limpiar recursos después de todos los tests.
  */
@@ -47,21 +51,36 @@ export function makeUserRepositoryContractTest(
 
     describe('create', () => {
       it('debería crear un nuevo usuario y retornarlo', async () => {
-        const userData = {
-          id: uuidv4(),
-          email: 'contract-test@example.com',
-          passwordHash:
-            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O',
-          role: 'student' as const,
-        };
+        const userData = new User(
+          uuidv4(),
+          new Email('contract-test@example.com'),
+          new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          new Role('student'),
+          new Date(), // Será ignorado por create
+          new Date() // Será ignorado por create
+        );
 
-        const createdUser = await userRepository.create(userData);
+        // Crear datos de usuario sin timestamps para el método create
+        const createData = {
+          id: userData.id,
+          email: userData.email,
+          passwordHash: userData.passwordHash,
+          role: userData.role,
+        } as Omit<User, 'createdAt' | 'updatedAt'>;
+        const createdUser = await userRepository.create(createData);
 
-        expect(createdUser).toBeDefined();
+        expect(createdUser).toBeInstanceOf(User);
         expect(createdUser.id).toBe(userData.id);
-        expect(createdUser.email).toBe(userData.email);
-        expect(createdUser.role).toBe(userData.role);
-        expect(createdUser.passwordHash).toBe(userData.passwordHash);
+        expect(createdUser.email).toBeInstanceOf(Email);
+        expect(createdUser.email.value).toBe(userData.email.value);
+        expect(createdUser.passwordHash).toBeInstanceOf(HashedPassword);
+        expect(createdUser.passwordHash.value).toBe(
+          userData.passwordHash.value
+        );
+        expect(createdUser.role).toBeInstanceOf(Role);
+        expect(createdUser.role.value).toBe(userData.role.value);
         expect(createdUser.createdAt).toBeInstanceOf(Date);
         expect(createdUser.updatedAt).toBeInstanceOf(Date);
 
@@ -73,19 +92,32 @@ export function makeUserRepositoryContractTest(
 
     describe('findById', () => {
       it('debería encontrar un usuario por su ID', async () => {
-        const userData = {
-          id: uuidv4(),
-          email: 'findbyid-test@example.com',
-          passwordHash: '$2b$12$test.hash',
-          role: 'student' as const,
-        };
+        const userData = new User(
+          uuidv4(),
+          new Email('findbyid-test@example.com'),
+          new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          new Role('student'),
+          new Date(),
+          new Date()
+        );
 
-        await userRepository.create(userData);
+        const createData = {
+          id: userData.id,
+          email: userData.email,
+          passwordHash: userData.passwordHash,
+          role: userData.role,
+        } as Omit<User, 'createdAt' | 'updatedAt'>;
+        await userRepository.create(createData);
         const foundUser = await userRepository.findById(userData.id);
 
-        expect(foundUser).toBeDefined();
+        expect(foundUser).toBeInstanceOf(User);
         expect(foundUser?.id).toBe(userData.id);
-        expect(foundUser?.email).toBe(userData.email);
+        expect(foundUser?.email).toBeInstanceOf(Email);
+        expect(foundUser?.email.value).toBe(userData.email.value);
+        expect(foundUser?.passwordHash).toBeInstanceOf(HashedPassword);
+        expect(foundUser?.role).toBeInstanceOf(Role);
       });
 
       it('debería retornar null si el usuario no existe', async () => {
@@ -98,19 +130,34 @@ export function makeUserRepositoryContractTest(
 
     describe('findByEmail', () => {
       it('debería encontrar un usuario por su email', async () => {
-        const userData = {
-          id: uuidv4(),
-          email: 'findbyemail-test@example.com',
-          passwordHash: '$2b$12$test.hash',
-          role: 'content_creator' as const,
-        };
+        const userData = new User(
+          uuidv4(),
+          new Email('findbyemail-test@example.com'),
+          new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          new Role('content_creator'),
+          new Date(),
+          new Date()
+        );
 
-        await userRepository.create(userData);
-        const foundUser = await userRepository.findByEmail(userData.email);
+        const createData = {
+          id: userData.id,
+          email: userData.email,
+          passwordHash: userData.passwordHash,
+          role: userData.role,
+        } as Omit<User, 'createdAt' | 'updatedAt'>;
+        await userRepository.create(createData);
+        const foundUser = await userRepository.findByEmail(
+          userData.email.value
+        );
 
-        expect(foundUser).toBeDefined();
+        expect(foundUser).toBeInstanceOf(User);
         expect(foundUser?.id).toBe(userData.id);
-        expect(foundUser?.email).toBe(userData.email);
+        expect(foundUser?.email).toBeInstanceOf(Email);
+        expect(foundUser?.email.value).toBe(userData.email.value);
+        expect(foundUser?.role).toBeInstanceOf(Role);
+        expect(foundUser?.role.value).toBe(userData.role.value);
       });
 
       it('debería retornar null si el email no existe', async () => {
@@ -124,18 +171,28 @@ export function makeUserRepositoryContractTest(
 
     describe('update', () => {
       it('debería actualizar un usuario existente', async () => {
-        const userData = {
-          id: uuidv4(),
-          email: 'update-test@example.com',
-          passwordHash: '$2b$12$original.hash',
-          role: 'student' as const,
-        };
+        const userData = new User(
+          uuidv4(),
+          new Email('update-test@example.com'),
+          new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          new Role('student'),
+          new Date(),
+          new Date()
+        );
 
-        await userRepository.create(userData);
+        const createData = {
+          id: userData.id,
+          email: userData.email,
+          passwordHash: userData.passwordHash,
+          role: userData.role,
+        } as Omit<User, 'createdAt' | 'updatedAt'>;
+        await userRepository.create(createData);
 
         const updateData = {
-          email: 'updated-email@example.com',
-          role: 'admin' as const,
+          email: new Email('updated-email@example.com'),
+          role: new Role('admin'),
         };
 
         const updatedUser = await userRepository.update(
@@ -143,17 +200,22 @@ export function makeUserRepositoryContractTest(
           updateData
         );
 
-        expect(updatedUser).toBeDefined();
+        expect(updatedUser).toBeInstanceOf(User);
         expect(updatedUser?.id).toBe(userData.id);
-        expect(updatedUser?.email).toBe(updateData.email);
-        expect(updatedUser?.role).toBe(updateData.role);
-        expect(updatedUser?.passwordHash).toBe(userData.passwordHash); // No debería cambiar
+        expect(updatedUser?.email).toBeInstanceOf(Email);
+        expect(updatedUser?.email.value).toBe(updateData.email.value);
+        expect(updatedUser?.role).toBeInstanceOf(Role);
+        expect(updatedUser?.role.value).toBe(updateData.role.value);
+        expect(updatedUser?.passwordHash).toBeInstanceOf(HashedPassword);
+        expect(updatedUser?.passwordHash.value).toBe(
+          userData.passwordHash.value
+        ); // No debería cambiar
       });
 
       it('debería retornar null si el usuario no existe', async () => {
         const nonExistentId = uuidv4();
         const updatedUser = await userRepository.update(nonExistentId, {
-          email: 'test@example.com',
+          email: new Email('test@example.com'),
         });
 
         expect(updatedUser).toBeNull();
@@ -162,18 +224,28 @@ export function makeUserRepositoryContractTest(
 
     describe('delete', () => {
       it('debería eliminar un usuario existente', async () => {
-        const userData = {
-          id: uuidv4(),
-          email: 'delete-test@example.com',
-          passwordHash: '$2b$12$test.hash',
-          role: 'student' as const,
-        };
+        const userData = new User(
+          uuidv4(),
+          new Email('delete-test@example.com'),
+          new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          new Role('student'),
+          new Date(),
+          new Date()
+        );
 
-        await userRepository.create(userData);
+        const createData = {
+          id: userData.id,
+          email: userData.email,
+          passwordHash: userData.passwordHash,
+          role: userData.role,
+        } as Omit<User, 'createdAt' | 'updatedAt'>;
+        await userRepository.create(createData);
 
         // Verificar que el usuario existe antes de eliminarlo
         const userBeforeDelete = await userRepository.findById(userData.id);
-        expect(userBeforeDelete).toBeDefined();
+        expect(userBeforeDelete).toBeInstanceOf(User);
 
         // Eliminar el usuario
         await userRepository.delete(userData.id);

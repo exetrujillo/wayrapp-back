@@ -24,7 +24,7 @@
 - ✅ Propósito: Proporcionar un entorno de trabajo diario estable y consistente para el desarrollo de funcionalidades
 - ✅ Tecnología: docker-compose.yml
 - ✅ Bases de Datos:
-  - ✅ Se levantan servicios para PostgreSQL, MySQL y MongoDB
+  - ✅ Se levantan servicios para PostgreSQL y MySQL.
   - ✅ Los datos son persistentes gracias al uso de volúmenes nombrados, sobreviviendo a los reinicios
 - ✅ Características:
   - ✅ Configurado para hot-reloading del código de la aplicación
@@ -35,7 +35,7 @@
 - ✅ Propósito: Garantizar pruebas de integración fiables, aisladas y deterministas
 - ✅ Tecnología: Testcontainers, gestionado directamente desde el código de Jest
 - ✅ Bases de Datos:
-  - ✅ Los contenedores de las bases de datos (PostgreSQL, MySQL, MongoDB) se crean y destruyen dinámicamente y bajo demanda para cada suite de pruebas
+  - ✅ Los contenedores de las bases de datos (PostgreSQL, MySQL) se crean y destruyen dinámicamente y bajo demanda para cada suite de pruebas
   - ✅ Los datos son efímeros. Cada ejecución de tests comienza con una base de datos limpia
 - ✅ Características:
   - ✅ Aislamiento total: Los tests que corren en paralelo no interfieren entre sí, ya que cada uno puede tener su propio contenedor
@@ -59,13 +59,13 @@
 
 - ✅ Templates de configuración para desarrollo y testing (virtual, gestionado en el código)
 - ✅ Validación de variables de entorno con Zod schemas
-- ⌛Configuración específica por BD: PostgreSQL, MySQL, MongoDB
+- ⌛Configuración específica por BD: PostgreSQL, MySQL
 - ✅ Separación estricta entre entornos
 
 ### 6. Configuración de CI/CD Base
 
 - 😒 GitHub Actions con matrix testing
-- 😒 Testing simultáneo contra PostgreSQL, MySQL y MongoDB
+- 😒 Testing simultáneo contra PostgreSQL, MySQL.
 - 😒 Quality gates con coverage y linting
 - 😒 Automated dependency updates
 
@@ -93,28 +93,16 @@ wayrapp-back/
 │   ├── infrastructure/                 # ✅ Implementaciones técnicas
 │   │   ├── database/                   # ✅ Persistencia agnóstica
 │   │   │   ├── adapters/               # ✅ Implementaciones específicas por BD
-│   │   │   │   ├── prisma/             # ✅ PostgreSQL con Prisma
-│   │   │   │   │   ├── repositories/   # ✅ PrismaUserRepository, PrismaCourseRepository
-│   │   │   │   │   ├── migrations/     # ✅ Migraciones Prisma
-│   │   │   │   │   └── schema.prisma   # ✅ Schema Prisma
-│   │   │   │   ├── typeorm/            # MySQL con TypeORM
-│   │   │   │   │   ├── repositories/   # TypeORMUserRepository, TypeORMCourseRepository
-│   │   │   │   │   ├── entities/       # TypeORM entities
-│   │   │   │   │   └── migrations/     # Migraciones TypeORM
-│   │   │   │   └── mongoose/           # MongoDB con Mongoose
-│   │   │   │       ├── repositories/   # MongoUserRepository, MongoCourseRepository
-│   │   │   │       ├── schemas/        # Mongoose schemas
-│   │   │   │       └── migrations/     # MongoDB migrations
+│   │   │   │   └── prisma/             # ✅ Directorio Principal de Prisma
+│   │   │   │       ├── repositories/   # ✅ UserRepository, CourseRepository
+│   │   │   │       ├── migrations/     # ✅ Migraciones Prisma
+│   │   │   │       └── schema.prisma   # ✅ Schema Prisma
 │   │   │   ├── factories/              # Database Factory Pattern
 │   │   │   │   ├── DatabaseFactory.ts  # Factory principal
-│   │   │   │   ├── PrismaFactory.ts    # Factory Prisma
-│   │   │   │   ├── TypeORMFactory.ts   # Factory TypeORM
-│   │   │   │   └── MongooseFactory.ts  # Factory Mongoose
+│   │   │   │   └── PrismaFactory.ts    # Factory Prisma
 │   │   │   └── config/                 # ✅Configuraciones BD
 │   │   │       ├── database.config.ts  # ✅ Config principal
-│   │   │       ├── prisma.config.ts    # ✅ Config Prisma
-│   │   │       ├── typeorm.config.ts   # Config TypeORM
-│   │   │       └── mongoose.config.ts  # Config Mongoose
+│   │   │       └── prisma.config.ts    # ✅ Config Prisma
 │   │   ├── services/                   # ✅ Servicios de infraestructura (PasswordService, EmailService, etc.)
 │   │   ├── web/                        # ✅ HTTP/Express
 │   │   │   ├── controllers/            # HTTP controllers
@@ -168,8 +156,7 @@ wayrapp-back/
 ├── __tests__/                          # ✅ Tests globales y de integración
 │   ├── integration/                    # ✅ Tests de integración por BD
 │   │   ├── postgresql/                 # ✅ Tests con PostgreSQL
-│   │   ├── mysql/                      # Tests con MySQL
-│   │   └── mongodb/                    # Tests con MongoDB
+│   │   └──  mysql/                      # Tests con MySQL
 │   ├── e2e/                            # Tests end-to-end
 │   ├── fixtures/                       # Datos de prueba
 │   ├── utils/                          # Utilidades de testing
@@ -180,8 +167,7 @@ wayrapp-back/
 │   ├── Dockerfile.prod                 # Dockerfile producción
 │   └── scripts/                        # Scripts Docker
 │       ├── setup-postgres.sh           # Setup PostgreSQL
-│       ├── setup-mysql.sh              # Setup MySQL
-│       └── setup-mongodb.sh            # Setup MongoDB
+│       └── setup-mysql.sh              # Setup MySQL
 │
 ├── docs/                               # Documentación
 │   ├── api/                            # Documentación API (OpenAPI/Swagger)
@@ -225,7 +211,7 @@ wayrapp-back/
 
 - ✅ Crear interfaces de Repository abstractas para User (IUserRepository implementado)
 - 😒 Crear interfaces de Repository para Course, Progress
-- 😒 Definir DTOs independientes del ORM (sin dependencias de Prisma/TypeORM/Mongoose)
+- 😒 Definir DTOs independientes del ORM (sin dependencias de Prisma)
 - ✅ Establecer contratos de servicios con inyección de dependencias
   - ✅ IPasswordService implementado en `src/core/interfaces/services/`
   - ✅ PasswordService implementado en `src/infrastructure/services/`
@@ -233,7 +219,7 @@ wayrapp-back/
 
 ### 8. Implementar Factory Pattern multi-BD
 
-- Database Factory principal que soporte PostgreSQL, MySQL y MongoDB
+- Database Factory principal que soporte PostgreSQL y MySQL
 - Repository Factory para instanciar repositories según configuración
 - Configuration-driven database selection basada en variables de entorno
 - Connection pooling agnóstico para cada tipo de BD
@@ -262,8 +248,8 @@ wayrapp-back/
 
 ### 11. TDD para User Repository multi-BD
 
-- Tests de contrato para IUserRepository ejecutados contra PostgreSQL, MySQL y MongoDB
-- Implementación Prisma, TypeORM y Mongoose del UserRepository
+- Tests de contrato para IUserRepository ejecutados contra PostgreSQL y MySQL
+- Implementación Prisma del UserRepository
 - Integration tests con test databases usando Testcontainers
 - Validación de que todas las implementaciones cumplen el mismo contrato
 
@@ -305,7 +291,7 @@ wayrapp-back/
 
 ### 16. Content Repository Layer agnóstico
 
-- Implementación de content repositories para PostgreSQL, MySQL y MongoDB
+- Implementación de content repositories para PostgreSQL y MySQL
 - Tests de integración para operaciones CRUD en las 3 BDs
 - Optimización de queries jerárquicas específicas por tipo de BD
 - Manejo de relaciones many-to-many entre Lessons y Exercises
@@ -321,18 +307,15 @@ wayrapp-back/
 
 **Objetivo: Probar completamente la arquitectura multi-BD**
 
-### 18. Implementar MongoDB adapter completo
+### 18. Implementar adapters completos
 
-- Crear implementación completa para MongoDB usando Mongoose
-- Validar que las interfaces funcionan correctamente con NoSQL
-- Tests de migración de datos entre PostgreSQL, MySQL y MongoDB
-- Optimizaciones específicas para documentos vs relacional
+- Tests de migración de datos entre PostgreSQL y MySQL
 
 ### 19. Database Factory completion y testing
 
 - Configuration-driven database selection por módulo
 - Environment-based database switching (dev/test/prod)
-- Performance testing comparativo entre las 3 implementaciones
+- Performance testing comparativo entre las 2 implementaciones
 - Load testing para validar escalabilidad
 
 ## Fase 7: API Layer y Documentación
@@ -341,7 +324,7 @@ wayrapp-back/
 
 ### 20. Express controllers con TDD multi-BD
 
-- Tests de integration para endpoints funcionando con las 3 BDs
+- Tests de integration para endpoints funcionando con las 2 BDs
 - Request/Response validation con Zod
 - Error handling HTTP consistente
 - API versioning preparado para futuras expansiones
@@ -360,22 +343,22 @@ wayrapp-back/
 ### 22. Performance optimization agnóstica
 
 - Database indexing optimizado para cada tipo de BD
-- Query optimization específica (SQL vs NoSQL)
+- Query optimization específica SQL
 - Caching strategies usando el sistema actual
 - Connection pooling optimizado por BD
 
 ### 23. Production setup multi-entorno
 
-- Docker configuration para las 3 BDs en producción
-- CI/CD pipeline con matrix testing (PostgreSQL, MySQL, MongoDB)
+- Docker configuration para las 2 BDs en producción
+- CI/CD pipeline con matrix testing (PostgreSQL y MySQL)
 - Monitoring y health checks específicos por BD
 - Deployment strategies para diferentes proveedores cloud
 
 ## Principios TDD a Seguir
 
-1. **Red-Green-Refactor**: Cada test debe fallar primero en las 3 BDs
+1. **Red-Green-Refactor**: Cada test debe fallar primero en las 2 BDs
 2. **Contract Testing**: Todas las implementaciones deben pasar los mismos tests
-3. **Multi-BD Testing**: Cada feature debe probarse en PostgreSQL, MySQL y MongoDB
+3. **Multi-BD Testing**: Cada feature debe probarse en PostgreSQL y MySQL
 4. **Integration First**: Tests de integración antes que unitarios para validar agnóstico
 5. **Performance Testing**: Comparar rendimiento entre implementaciones
 
@@ -383,63 +366,9 @@ wayrapp-back/
 
 - **Runtime**: Node.js v22.19.0 (LTS)
 - **TypeScript**: 5.9.2
-- **Testing**: Jest v30.0 + Supertest + Testcontainers
+- **Testing**: Jest v29 + Supertest + Testcontainers
 - **Validation**: Zod
 - **DI**: tsyringe
-- **Database**: Prisma v6.16.0 + TypeORM 0.3.26 + Mongoose 8.x
+- **Database**: Prisma v6.16.0
 - **HTTP**: Express 5.1 + Helmet + CORS
 - **Security**: bcrypt para password hashing
-
-## Estado Actual de Implementación
-
-### ✅ Completado (Fase 1-3 Parcial)
-
-#### **Configuración Base**
-- ✅ Proyecto inicializado con Node.js v22.19.0 y TypeScript 5.9.2
-- ✅ Jest configurado para testing unitario e integración
-- ✅ Testcontainers configurado para aislamiento de BD
-- ✅ Docker Compose para desarrollo
-- ✅ ESLint, Prettier y Husky configurados
-
-#### **Domain Layer**
-- ✅ User entity implementada con validaciones completas
-- ✅ Value objects: Email, Password (PlainPassword/HashedPassword), Role
-- ✅ IUserRepository interface definida
-- ✅ IPasswordService interface definida
-
-#### **Infrastructure Layer**
-- ✅ PasswordService implementado con bcrypt real
-- ✅ Configuración de base de datos (Prisma)
-- ✅ Express app setup básico
-
-#### **Testing**
-- ✅ 108 tests pasando (100% success rate)
-- ✅ Tests unitarios para value objects y entidades
-- ✅ Tests de integración para PasswordService
-- ✅ Tests de ejemplo para flujos de autenticación
-- ✅ Tests con bcrypt real (no mocks ni hardcoded)
-
-#### **Estructura de Carpetas**
-```
-src/
-├── core/
-│   ├── domain/
-│   │   ├── entities/User.ts ✅
-│   │   └── value-objects/ ✅
-│   └── interfaces/
-│       ├── repositories/IUserRepository.ts ✅
-│       └── services/IPasswordService.ts ✅
-├── infrastructure/
-│   ├── database/adapters/prisma/ ✅
-│   ├── services/PasswordService.ts ✅
-│   └── web/app.ts ✅
-└── modules/
-    └── auth/__tests__/ ✅
-```
-
-### 🎯 Próximo Paso Recomendado
-
-**Fase 2, Punto 8**: Implementar Factory Pattern multi-BD
-- Crear DatabaseFactory para PostgreSQL, MySQL y MongoDB
-- Implementar Repository Factory pattern
-- Configuration-driven database selection

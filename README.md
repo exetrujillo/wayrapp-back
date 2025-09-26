@@ -8,7 +8,7 @@ Backend para la aplicación de aprendizaje de idiomas WayrApp. Diseñado con una
 - **Lenguaje:** TypeScript v5.9.2
 - **Framework:** Express.js v5.1.0
 - **Containerización:** Docker & Docker Compose
-- **Bases de Datos (Desarrollo):** PostgreSQL 17, MySQL 8.4, MongoDB 8.0
+- **Bases de Datos (Desarrollo):** PostgreSQL 17, MySQL 8.4
 - **Calidad de Código:** ESLint, Prettier, Husky, lint-staged
 
 ---
@@ -42,7 +42,7 @@ npm install
 
 ### 4. Levantar el Entorno Docker
 
-Este comando construirá las imágenes y levantará todos los servicios (la app y las 3 bases de datos) en segundo plano.
+Este comando construirá las imágenes y levantará todos los servicios (la app y las 2 bases de datos) en segundo plano.
 
 ```bash
 npm run docker:up
@@ -119,9 +119,9 @@ Tenemos distintos lugares para los tests:
 - `__tests__/integration/` (Tests de Integración):
   - Probar cómo varias unidades de código trabajan juntas. En nuestro caso, el foco principal es probar la interacción con la base de datos real.
   - Sí tocan la base de datos (a través de Testcontainers).
-  - Verifican que los adaptadores de base de datos (ej: PrismaUserRepository) funcionan correctamente contra una base de datos real.
+  - Verifican que los adaptadores de base de datos (ej: UserRepository) funcionan correctamente contra una base de datos real.
   - Son más lentos que los tests unitarios.
-  - Ejemplo: El test que ya tenemos (app.test.ts) es un test de integración ligero. Un ejemplo más profundo sería un test para PrismaUserRepository que crea un usuario y luego lo lee para verificar que se guardó correctamente. Las subcarpetas postgresql/, mysql/ son para organizar estos tests.
+  - Ejemplo: El test que ya tenemos (app.test.ts) es un test de integración ligero. Un ejemplo más profundo sería un test para UserRepository que crea un usuario y luego lo lee para verificar que se guardó correctamente. Las subcarpetas postgresql/, mysql/ son para organizar estos tests.
 - `__tests__/e2e/` (Tests End-to-End):
   - Probar el flujo completo de la aplicación desde la perspectiva del usuario.
   - Simulan una petición HTTP externa (como la que haría un frontend).

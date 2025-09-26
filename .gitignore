@@ -3,7 +3,9 @@ dist/
 .env
 npm-debug.log
 *.log
+.kiro/
 
 # Reportes de jest
 coverage/
 /generated/prisma
+

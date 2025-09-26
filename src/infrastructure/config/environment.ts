@@ -33,14 +33,22 @@ const envSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().min(1).max(65535).default(3000),
 
-  // Variables para PostgreSQL
-  DB_POSTGRES_USER: z.string(),
-  DB_POSTGRES_PASSWORD: z.string(),
-  DB_POSTGRES_HOST: z.string(),
-  DB_POSTGRES_PORT: z.coerce.number(),
-  DB_POSTGRES_NAME: z.string(),
+  // Database type selection
+  DATABASE_TYPE: z.enum(['postgresql', 'mysql']).default('postgresql'),
 
-  // (Añadiremos las variables para MySQL y Mongo aquí cuando las necesitemos)
+  // Variables para PostgreSQL
+  DB_POSTGRES_USER: z.string().optional(),
+  DB_POSTGRES_PASSWORD: z.string().optional(),
+  DB_POSTGRES_HOST: z.string().optional(),
+  DB_POSTGRES_PORT: z.coerce.number().optional(),
+  DB_POSTGRES_NAME: z.string().optional(),
+
+  // Variables para MySQL
+  DB_MYSQL_USER: z.string().optional(),
+  DB_MYSQL_PASSWORD: z.string().optional(),
+  DB_MYSQL_HOST: z.string().optional(),
+  DB_MYSQL_PORT: z.coerce.number().optional(),
+  DB_MYSQL_NAME: z.string().optional(),
 });
 
 // 2. Validamos las partes
@@ -57,14 +65,30 @@ if (!parsedEnv.success) {
 
 // 3. CONSTRUIMOS las URLs aquí, con datos ya validados
 const env = parsedEnv.data;
+
+// Build database URLs only if the required variables are present
 const databaseUrls = {
-  postgres: `postgresql://${env.DB_POSTGRES_USER}:${env.DB_POSTGRES_PASSWORD}@${env.DB_POSTGRES_HOST}:${env.DB_POSTGRES_PORT}/${env.DB_POSTGRES_NAME}?schema=public`,
-  // mysql: `...`,
-  // mongo: `...`,
+  postgres:
+    env.DB_POSTGRES_USER &&
+    env.DB_POSTGRES_PASSWORD &&
+    env.DB_POSTGRES_HOST &&
+    env.DB_POSTGRES_PORT &&
+    env.DB_POSTGRES_NAME
+      ? `postgresql://${env.DB_POSTGRES_USER}:${env.DB_POSTGRES_PASSWORD}@${env.DB_POSTGRES_HOST}:${env.DB_POSTGRES_PORT}/${env.DB_POSTGRES_NAME}?schema=public`
+      : undefined,
+  mysql:
+    env.DB_MYSQL_USER &&
+    env.DB_MYSQL_PASSWORD &&
+    env.DB_MYSQL_HOST &&
+    env.DB_MYSQL_PORT &&
+    env.DB_MYSQL_NAME
+      ? `mysql://${env.DB_MYSQL_USER}:${env.DB_MYSQL_PASSWORD}@${env.DB_MYSQL_HOST}:${env.DB_MYSQL_PORT}/${env.DB_MYSQL_NAME}`
+      : undefined,
 };
 
 // 4. Exportamos una configuración final que incluye las URLs construidas
 export const config = {
   ...env, // NODE_ENV, PORT, etc.
   DATABASE_URL_POSTGRES: databaseUrls.postgres,
+  DATABASE_URL_MYSQL: databaseUrls.mysql,
 };

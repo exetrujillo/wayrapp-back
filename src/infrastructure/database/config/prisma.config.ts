@@ -1,6 +1,6 @@
 // src/infrastructure/database/config/prisma.config.ts
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/infrastructure/node_modules/.prisma/client';
 import { config } from '@/infrastructure/config/environment';
 
 /**

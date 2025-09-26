@@ -27,20 +27,13 @@ import {
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
 import { MySqlContainer, StartedMySqlContainer } from '@testcontainers/mysql';
-import {
-  MongoDBContainer,
-  StartedMongoDBContainer,
-} from '@testcontainers/mongodb';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/infrastructure/node_modules/.prisma/client';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-type SupportedContainer =
-  | StartedPostgreSqlContainer
-  | StartedMySqlContainer
-  | StartedMongoDBContainer;
+type SupportedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
 
 let container: SupportedContainer;
 
@@ -58,6 +51,14 @@ export class TestDatabaseUtils {
       throw new Error(
         'TEST_DATABASE_URL no seteado. Asegúrate de que el test container esté corriendo.'
       );
+    }
+
+    // Configuramos las variables de entorno que Prisma espera según el proveedor
+    const dbProvider = process.env.DATABASE_PROVIDER;
+    if (dbProvider === 'postgres') {
+      process.env.DATABASE_URL_POSTGRES = process.env.TEST_DATABASE_URL;
+    } else if (dbProvider === 'mysql') {
+      process.env.DATABASE_URL_MYSQL = process.env.TEST_DATABASE_URL;
     }
 
     return new PrismaClient({
@@ -90,44 +91,54 @@ export class TestDatabaseUtils {
   }
 }
 
-// Aumentamos el timeout de Jest para dar tiempo a que el contenedor arranque.
+// Timeout de Jest para dar tiempo a que el contenedor arranque
 jest.setTimeout(60000);
 
 beforeAll(async () => {
-  const dbType = process.env.TEST_DB_TYPE || 'postgres';
-  console.log(`\nSeteando Testcontainer para: ${dbType}`);
+  const dbProvider = process.env.DATABASE_PROVIDER;
+  if (!dbProvider) {
+    throw new Error(
+      'La variable de entorno DATABASE_PROVIDER no está definida. Ejecuta los tests a través de los scripts de npm (ej: npm run test:integration:postgres)'
+    );
+  }
 
-  switch (dbType) {
+  console.log(`\nConfigurando Testcontainer para: ${dbProvider}`);
+
+  switch (dbProvider) {
     case 'postgres':
       container = await new PostgreSqlContainer('postgres:17.3-alpine').start();
       process.env.TEST_DATABASE_URL = container.getConnectionUri();
       break;
     case 'mysql':
       container = await new MySqlContainer('mysql:8.4')
-        .withUser('testuser')
         .withRootPassword('testpass')
         .withDatabase('testdb')
         .start();
       process.env.TEST_DATABASE_URL = container.getConnectionUri();
       break;
-    case 'mongodb':
-      container = await new MongoDBContainer('mongo:8.0').start();
-      process.env.TEST_DATABASE_URL = container.getConnectionString();
-      break;
     default:
-      throw new Error(`TEST_DB_TYPE no soportado: ${dbType}`);
+      throw new Error(`DATABASE_PROVIDER no soportado: ${dbProvider}`);
   }
 
-  console.log(`Iniciado el container de tipo ${dbType}.`);
+  console.log(`Iniciado el container de tipo ${dbProvider}.`);
   console.log(`URL de conexión: ${process.env.TEST_DATABASE_URL}`);
 
-  if (dbType === 'postgres' || dbType === 'mysql') {
-    console.log('Corriendo las migraciones de bases de datos...');
-    await execAsync(
-      `cross-env DATABASE_URL_POSTGRES=${process.env.TEST_DATABASE_URL} npx prisma migrate deploy`
-    );
-    console.log('Migraciones aplicadas exitosamente.');
+  let migrateCommand: string;
+  if (dbProvider === 'postgres') {
+    migrateCommand = `cross-env DATABASE_URL_POSTGRES='${process.env.TEST_DATABASE_URL}' npx prisma migrate deploy`;
+  } else if (dbProvider === 'mysql') {
+    // Para MySQL, necesitamos usar prisma db push en lugar de migrate deploy
+    // porque las migraciones están configuradas para PostgreSQL
+    migrateCommand = `cross-env DATABASE_URL_MYSQL='${process.env.TEST_DATABASE_URL}' npx prisma db push --force-reset`;
+  } else {
+    // Esto es por seguridad, aunque el switch anterior ya debería haber fallado
+    throw new Error('No se pudo determinar el comando de migración.');
   }
+
+  console.log('Ejecutando las migraciones de base de datos...');
+  console.log(`Comando: ${migrateCommand}`);
+  await execAsync(migrateCommand);
+  console.log('Migraciones aplicadas exitosamente.');
 });
 
 afterAll(async () => {

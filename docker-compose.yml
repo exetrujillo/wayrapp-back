@@ -19,7 +19,6 @@ services:
     depends_on:
       - postgres-db
       - mysql-db
-      - mongo-db
     networks:
       - wayrapp-net
 
@@ -54,21 +53,6 @@ services:
     networks:
       - wayrapp-net
 
-  mongo-db:
-    image: mongo:8.0
-    container_name: wayrapp-mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DB_MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_MONGO_ROOT_PASSWORD}
-    ports:
-      # Lee el puerto del host desde .env, con 27017 como fallback.
-      - '${DB_MONGO_HOST_PORT:-27017}:27017'
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - wayrapp-net
-
 volumes:
   postgres-data:
   mysql-data:
-  mongo-data:

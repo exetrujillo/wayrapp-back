@@ -8,11 +8,29 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   testTimeout: 30000,
   maxWorkers: 1,
-  transformIgnorePatterns: ['/node_modules/(?!uuid)'],
+  // Configuración más agresiva para transformar módulos ES
+  transformIgnorePatterns: [
+    // Transforma todos los módulos excepto los que están explícitamente excluidos
+    '/node_modules/(?!.*)'
+  ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
-    '^.+\\.(js|mjs)$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      useESM: false
+    }],
+    '^.+\\.(js|jsx|mjs|cjs)$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      useESM: false
+    }],
   },
-  // Asegúrate de que los patrones de transformación y el mapeador se hereden
-  // ...unitConfig ya lo hace, así que no necesitas redefinirlos.
+  // Mapea módulos problemáticos
+  moduleNameMapper: {
+    ...unitConfig.moduleNameMapper,
+    // Usa nuestro wrapper CommonJS para uuid
+    '^uuid$': '<rootDir>/__tests__/uuid-wrapper.cjs',
+  },
+  // Configura extensiones de archivo
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mjs', 'cjs'],
+  // Configuración adicional para manejar módulos ES
+  extensionsToTreatAsEsm: []
 };
