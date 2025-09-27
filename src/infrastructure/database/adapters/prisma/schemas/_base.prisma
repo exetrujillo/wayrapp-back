@@ -1,7 +1,3 @@
-// WayrApp Database Schema
-// Author: Exequiel Trujillo
-// Schema para la plataforma de aprendizaje de lenguas - En desarrollo
-
 // --- Modelo de Usuario ---
 model User {
   // --- Campos Esenciales ---

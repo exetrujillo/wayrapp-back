@@ -16,23 +16,20 @@ graph TD
     C --> D[makeUserRepositoryContractTest]
     D --> E[Tests FAIL - RED State]
 
-    %% Phase 2: Implementation (GREEN)
+    %% Phase 2: Implementation & Multi-DB Validation (GREEN)
     E --> F[Implementar UserRepository con Prisma]
-    F --> G[Correr Tests de Integración vs PostgreSQL]
-    G --> H[Tests PASS vs PostgreSQL - GREEN State]
+    F --> G[Correr Tests vs PostgreSQL]
+    G --> H[Correr Tests vs MySQL]
+    H --> I[Tests PASS en ambas BDs - GREEN State]
+    I --> J[Refactorizar con todos los tests en verde]
 
-    %% Phase 3: Validation & Refactor (VALIDATE & REFACTOR)
-    H --> I[Correr MISMOS Tests vs MySQL con Prisma]
-    I --> J[Tests PASS vs MySQL - VALIDATED State]
-    J --> K[Refactorizar UserRepository con todos los tests en verde]
-
-    %% Phase 4: Application Layers (TDD Cycle)
-    K --> L[TDD para la Capa de Servicios]
-    L --> M[TDD para la Capa de API]
+    %% Phase 3: Application Layers (TDD Cycle)
+    J --> K[TDD para la Capa de Servicios]
+    K --> L[TDD para la Capa de API]
     
-    %% Phase 5: Finalization
-    M --> N[Implementar la Factory]
-    N --> O[Configurar Pipeline de CI/CD para testear en ambas BDs]
+    %% Phase 4: Finalization
+    L --> M[Implementar la Factory]
+    M --> N[Configurar Pipeline de CI/CD para testear en ambas BDs]
 
 
     %% Styling
@@ -43,8 +40,7 @@ graph TD
 
     class A,B,C,D,E redPhase
     class F,G,H,I,J greenPhase
-    class K refactorPhase
-    class L,M,N,O interfacePhase
+    class K,L,M,N interfacePhase
 ```
 
 ## Fases de Implementación TDD
@@ -129,28 +125,9 @@ export interface UpdateUserData {
 }
 ```
 
-### Fase 2: Tests de Contrato PRIMERO (RED)
+### Fase 2: Implementación y Validación Multi-BD (GREEN)
 
-#### 2.1 Escribir Tests ANTES de Implementar
-
-```typescript
-// src/core/interfaces/repositories/__tests__/IUserRepository.contract.test.ts
-export function makeUserRepositoryContractTest(
-  description: string,
-  setupRepository: () => {
-    repository: IUserRepository;
-    cleanDatabase: () => Promise<void>;
-    verifyUserInDatabase: (id: string) => Promise<boolean>;
-  },
-  teardownRepository: () => Promise<void>
-) {
-  // Tests de contrato que todas las implementaciones deben pasar
-}
-```
-
-### Fase 3: Primera Implementación (GREEN)
-
-#### 3.1 Implementar UserRepository con Prisma para Pasar Tests
+#### 2.1 Implementar UserRepository con Prisma
 
 ```typescript
 // src/infrastructure/database/adapters/prisma/repositories/UserRepository.ts
@@ -160,14 +137,14 @@ export class UserRepository implements IUserRepository {
 }
 ```
 
-#### 3.2 Tests de Integración
+#### 2.2 Validación Multi-Base de Datos
 
 ```typescript
-// __tests__/integration/postgresql/UserRepository.pg.test.ts
+// __tests__/integration/UserRepository.test.ts
 makeUserRepositoryContractTest(
-  'UserRepository Integration Tests - PostgreSQL',
+  'UserRepository Integration Tests - Contract',
   () => ({
-    repository: new UserRepository(testPrismaClient),
+    repository: new UserRepository(TestDatabaseUtils.createTestPrismaClient()),
     cleanDatabase: () => TestDatabaseUtils.cleanDatabase(testPrismaClient),
     verifyUserInDatabase: async (id: string) => {
       const user = await testPrismaClient.user.findUnique({ where: { id } });
@@ -180,25 +157,13 @@ makeUserRepositoryContractTest(
 );
 ```
 
-```typescript
-// __tests__/integration/mysql/UserRepository.mysql.test.ts
-makeUserRepositoryContractTest(
-  'UserRepository Integration Tests - MySQL',
-  () => ({
-    repository: new UserRepository(testPrismaClient),
-    cleanDatabase: () => TestDatabaseUtils.cleanDatabase(testPrismaClient),
-    verifyUserInDatabase: async (id: string) => {
-      const user = await testPrismaClient.user.findUnique({ where: { id } });
-      return user !== null;
-    },
-  }),
-  async () => {
-    await TestDatabaseUtils.disconnectPrismaClient(testPrismaClient);
-  }
-);
+**Comandos de validación:**
+```bash
+npm run test:integration:postgres  # Tests contra PostgreSQL
+npm run test:integration:mysql     # Tests contra MySQL
 ```
 
-### Fase 4: Capa de Servicios
+### Fase 3: Capa de Servicios
 
 #### 4.1 Casos de Uso
 
@@ -224,7 +189,7 @@ export class UserService {
 }
 ```
 
-### Fase 5: Capa de API
+### Fase 4: Capa de API
 
 #### 5.1 DTOs y Validación
 
@@ -253,9 +218,9 @@ export class UserController {
 }
 ```
 
-### Fase 6: Patrón Factory
+### Fase 5: Patrón Factory
 
-#### 6.1 Factory de Base de Datos
+#### 5.1 Factory de Base de Datos
 
 ```typescript
 // src/infrastructure/database/factories/DatabaseFactory.ts
@@ -382,23 +347,30 @@ jobs:
 - ✅ Testcontainers configurado para ambas BDs
 - ✅ Configuración de Jest para módulos ES (uuid) resuelta
 
-### Ciclo 2: Service Layer
+### Ciclo 2: Repository Implementation & Multi-DB Validation
 
-7. 🔄 **RED**: Escribir tests de servicios y casos de uso PRIMERO
-8. 🔄 **GREEN**: Implementar servicios para pasar tests
-9. 🔄 **REFACTOR**: Optimizar inyección de dependencias
+6. ✅ **GREEN**: Implementar UserRepository con Prisma (IMPLEMENTADO)
+7. ✅ **GREEN**: Validar implementación en PostgreSQL (IMPLEMENTADO)
+8. ✅ **GREEN**: Validar implementación en MySQL (IMPLEMENTADO)
+9. ✅ **REFACTOR**: Optimizar implementación y configuración multi-BD (IMPLEMENTADO)
 
-### Ciclo 3: API Layer
+### Ciclo 3: Service Layer
 
-10. 🔄 **RED**: Escribir tests de controladores y validación PRIMERO
-11. 🔄 **GREEN**: Implementar controladores y DTOs para pasar tests
-12. 🔄 **REFACTOR**: Optimizar validación con Zod
+10. 🔄 **RED**: Escribir tests de servicios y casos de uso PRIMERO
+11. 🔄 **GREEN**: Implementar servicios para pasar tests
+12. 🔄 **REFACTOR**: Optimizar inyección de dependencias
 
-### Ciclo 4: Factory Pattern
+### Ciclo 4: API Layer
 
-13. 🔄 **RED**: Escribir tests de factory pattern PRIMERO
-14. 🔄 **GREEN**: Implementar factory para pasar tests
-15. 🔄 **REFACTOR**: Configurar CI/CD con testing multi-base de datos
+13. 🔄 **RED**: Escribir tests de controladores y validación PRIMERO
+14. 🔄 **GREEN**: Implementar controladores y DTOs para pasar tests
+15. 🔄 **REFACTOR**: Optimizar validación con Zod
+
+### Ciclo 5: Factory Pattern
+
+16. 🔄 **RED**: Escribir tests de factory pattern PRIMERO
+17. 🔄 **GREEN**: Implementar factory para pasar tests
+18. 🔄 **REFACTOR**: Configurar CI/CD con testing multi-base de datos
 
 ## Próximos Pasos Inmediatos
 
@@ -409,6 +381,7 @@ jobs:
 2. ✅ **Tests de contrato pasando** en ambas bases de datos
 3. ✅ **Tests de integración** con Testcontainers configurados
 4. ✅ **Configuración de Jest** para módulos ES resuelta
+5. ✅ **Validación Multi-BD** completada en un solo ciclo
 
 ### Siguientes Fases:
 
@@ -422,7 +395,7 @@ jobs:
 ### Estado Actualizado del Proyecto:
 
 - ✅ **Domain Layer**: Completamente implementado con TDD
-- ✅ **Repository Layer**: Implementado y validado en PostgreSQL y MySQL
+- ✅ **Repository Layer + Multi-BD**: Implementado y validado en PostgreSQL y MySQL
 - 🔄 **Service Layer**: Próximo en implementar
 - 🔄 **API Layer**: Pendiente
 - 🔄 **Factory Pattern**: Pendiente

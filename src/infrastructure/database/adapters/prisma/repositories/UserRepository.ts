@@ -48,7 +48,7 @@ export class DatabaseConnectionError extends UserRepositoryError {
 
 /**
  * Implementación optimizada de IUserRepository usando Prisma ORM
- * con manejo de errores mejorado, logging y optimizaciones de rendimiento
+ * con manejo de errores, logging y optimizaciones de rendimiento
  *
  * Características implementadas:
  * - Manejo específico de errores de Prisma con códigos de error detallados
