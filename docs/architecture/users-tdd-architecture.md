@@ -26,7 +26,7 @@ graph TD
     %% Phase 3: Application Layers (TDD Cycle)
     J --> K[TDD para la Capa de Servicios]
     K --> L[TDD para la Capa de API]
-    
+
     %% Phase 4: Finalization
     L --> M[Implementar la Factory]
     M --> N[Configurar Pipeline de CI/CD para testear en ambas BDs]
@@ -158,6 +158,7 @@ makeUserRepositoryContractTest(
 ```
 
 **Comandos de validación:**
+
 ```bash
 npm run test:integration:postgres  # Tests contra PostgreSQL
 npm run test:integration:mysql     # Tests contra MySQL
@@ -238,14 +239,15 @@ export class DatabaseFactory {
 ```typescript
 // src/infrastructure/database/config/prisma.config.ts
 export const createPrismaClient = (): PrismaClient => {
-  const databaseUrl = config.database.provider === 'postgresql' 
-    ? config.database.postgresUrl 
-    : config.database.mysqlUrl;
-    
+  const databaseUrl =
+    config.database.provider === 'postgresql'
+      ? config.database.postgresUrl
+      : config.database.mysqlUrl;
+
   return new PrismaClient({
     datasources: {
-      db: { url: databaseUrl }
-    }
+      db: { url: databaseUrl },
+    },
   });
 };
 ```
@@ -334,6 +336,7 @@ jobs:
 **Estado Actual del Proyecto:**
 
 **Domain Layer:**
+
 - ✅ User entity con validaciones completas
 - ✅ Value objects: Email, Password (Plain/Hashed), Role
 - ✅ IUserRepository interface definida
@@ -341,6 +344,7 @@ jobs:
 - ✅ Tests de contrato para IUserRepository
 
 **Repository Layer:**
+
 - ✅ UserRepository implementado con Prisma
 - ✅ Tests de integración con PostgreSQL funcionando
 - ✅ Tests de integración con MySQL funcionando
@@ -377,6 +381,7 @@ jobs:
 ### Fase Actual: Service Layer (Próximo Ciclo TDD)
 
 **Repository Layer Completado:**
+
 1. ✅ **UserRepository implementado** con Prisma funcionando en PostgreSQL y MySQL
 2. ✅ **Tests de contrato pasando** en ambas bases de datos
 3. ✅ **Tests de integración** con Testcontainers configurados
@@ -409,7 +414,7 @@ npm run test:unit
 # Tests de integración PostgreSQL
 npm run test:integration:postgres
 
-# Tests de integración MySQL  
+# Tests de integración MySQL
 npm run test:integration:mysql
 
 # Tests en ambas bases de datos
@@ -417,6 +422,7 @@ npm run test:all-dbs
 ```
 
 **Resultados de Testing:**
+
 - ✅ PostgreSQL: 2 test suites passed, 10 tests passed
 - ✅ MySQL: 2 test suites passed, 10 tests passed
 - ✅ UUID ES module issue: Resuelto con wrapper CommonJS

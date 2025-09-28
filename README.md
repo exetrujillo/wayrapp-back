@@ -136,7 +136,7 @@ npm test
 
 ### Arquitectura de Testing
 
-- **`src/**/*.test.ts`** (Tests Unitarios):
+- **`src/**/\*.test.ts`\*\* (Tests Unitarios):
   - Prueban unidades de código aisladas (funciones, clases)
   - No tocan bases de datos ni servicios externos
   - Usan mocks para dependencias externas
@@ -158,6 +158,7 @@ npm test
 ### Hooks de Git
 
 Los tests se ejecutan automáticamente:
+
 - **pre-commit**: Tests unitarios en archivos modificados
 - **pre-push**: Suite completa de tests de integración (PostgreSQL + MySQL)
 

@@ -23,8 +23,8 @@ export class PlainPassword {
 
   constructor(value: string) {
     // Asignar el valor temporalmente para las validaciones
-    this._value = value;
     this.validatePassword(value);
+    this._value = value;
   }
 
   get value(): string {

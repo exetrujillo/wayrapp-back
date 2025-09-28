@@ -3,6 +3,7 @@
 ## ¿Qué es TDD y por qué usarlo?
 
 **TDD (Test-Driven Development)** es una metodología donde escribes las pruebas ANTES que el código. Esto te ayuda a:
+
 - Diseñar mejor tu código
 - Asegurar que funciona correctamente
 - Facilitar cambios futuros sin romper nada
@@ -17,6 +18,7 @@
 ### Aplicación del Ciclo en esta Fase
 
 En **Fase 1** estamos en el estado **🔴 RED** porque:
+
 - Definimos las interfaces (contratos) de lo que queremos
 - Escribimos tests que validan estos contratos
 - Los tests fallan porque aún no existe la implementación
@@ -34,6 +36,7 @@ En esta fase definimos **QUÉ** hace nuestro sistema, no **CÓMO** lo hace. Pié
 ## Paso 1.1: Crear la Entidad de Dominio
 
 ### ¿Qué es una Entidad de Dominio?
+
 Es la representación de un concepto importante en tu negocio (Usuario, Curso, Lección, Ejercicio, Progreso, etc.). Contiene las reglas de negocio y validaciones.
 
 ### Estructura General de una Entidad
@@ -44,14 +47,14 @@ Es la representación de un concepto importante en tu negocio (Usuario, Curso, L
 // Esta clase representa una ENTIDAD PRINCIPAL de tu sistema
 export class YourEntity {
   constructor(
-    public readonly id: string,           // ID único de la entidad
-    public readonly name: string,         // Nombre o título principal
-    public readonly description: string,  // Descripción de la entidad
+    public readonly id: string, // ID único de la entidad
+    public readonly name: string, // Nombre o título principal
+    public readonly description: string, // Descripción de la entidad
     public readonly status: EntityStatus, // Estado usando Value Object
-    public readonly ownerId: string,      // ID del propietario/creador
-    public readonly isActive: boolean,    // ¿Está activa/disponible?
-    public readonly createdAt: Date,      // Cuándo se creó
-    public readonly updatedAt: Date       // Cuándo se actualizó por última vez
+    public readonly ownerId: string, // ID del propietario/creador
+    public readonly isActive: boolean, // ¿Está activa/disponible?
+    public readonly createdAt: Date, // Cuándo se creó
+    public readonly updatedAt: Date // Cuándo se actualizó por última vez
   ) {
     // Validamos que los datos sean correctos al crear la entidad
     this.validateConstructorParams();
@@ -59,10 +62,13 @@ export class YourEntity {
 
   // ✨ REGLAS DE NEGOCIO ✨
   // Estas funciones encapsulan la lógica de qué puede hacer tu entidad
-  
+
   canBeAccessedBy(userRole: string): boolean {
     // Define quién puede acceder a esta entidad
-    return this.isActive && ['authorized_role_1', 'authorized_role_2'].includes(userRole);
+    return (
+      this.isActive &&
+      ['authorized_role_1', 'authorized_role_2'].includes(userRole)
+    );
   }
 
   canBeModifiedBy(userId: string, userRole: string): boolean {
@@ -77,7 +83,7 @@ export class YourEntity {
 
   // 🔧 MÉTODOS DE UTILIDAD 🔧
   // Facilitan el uso de la entidad en otras partes del código
-  
+
   getDisplayName(): string {
     return this.name;
   }
@@ -99,6 +105,7 @@ export class YourEntity {
 ```
 
 ### ¿Por qué hacer esto?
+
 - **Centraliza las reglas**: Toda la lógica de qué puede hacer tu entidad está en un lugar
 - **Previene errores**: Las validaciones evitan datos incorrectos
 - **Facilita testing**: Es fácil probar estas reglas
@@ -107,6 +114,7 @@ export class YourEntity {
 ## Paso 1.2: Crear Value Objects
 
 ### ¿Qué son los Value Objects?
+
 Son objetos que representan valores con validaciones específicas. No tienen identidad propia, solo importa su valor.
 
 ### Estructura General de un Value Object
@@ -118,9 +126,9 @@ Son objetos que representan valores con validaciones específicas. No tienen ide
 export class EntityStatus {
   private static readonly VALID_STATUSES = [
     'active',
-    'inactive', 
+    'inactive',
     'pending',
-    'archived'
+    'archived',
   ] as const;
 
   constructor(public readonly value: string) {
@@ -161,20 +169,20 @@ export class EntityStatus {
   // 📊 UTILIDADES 📊
   getDisplayName(): string {
     const displayNames = {
-      'active': 'Activo',
-      'inactive': 'Inactivo',
-      'pending': 'Pendiente',
-      'archived': 'Archivado'
+      active: 'Activo',
+      inactive: 'Inactivo',
+      pending: 'Pendiente',
+      archived: 'Archivado',
     };
     return displayNames[this.value as keyof typeof displayNames];
   }
 
   getColorCode(): string {
     const colors = {
-      'active': '#4CAF50',    // Verde
-      'inactive': '#9E9E9E',  // Gris
-      'pending': '#FF9800',   // Naranja
-      'archived': '#607D8B'   // Azul gris
+      active: '#4CAF50', // Verde
+      inactive: '#9E9E9E', // Gris
+      pending: '#FF9800', // Naranja
+      archived: '#607D8B', // Azul gris
     };
     return colors[this.value as keyof typeof colors];
   }
@@ -182,6 +190,7 @@ export class EntityStatus {
 ```
 
 ### ¿Por qué usar Value Objects?
+
 - **Validación automática**: No puedes crear estados inválidos
 - **Encapsula comportamiento**: Los métodos `isActive()` son más legibles que comparar strings
 - **Reutilizable**: Puedes usar `EntityStatus` en cualquier parte del código
@@ -190,6 +199,7 @@ export class EntityStatus {
 ## Paso 1.3: Definir la Interface del Repository
 
 ### ¿Qué es un Repository?
+
 Es el "contrato" que define cómo guardar y recuperar datos, sin especificar si usas PostgreSQL, MySQL, archivos, etc.
 
 ### Estructura General de un Repository Interface
@@ -203,19 +213,19 @@ Es el "contrato" que define cómo guardar y recuperar datos, sin especificar si 
 export interface IYourEntityRepository {
   // 🆕 CREAR - Guardar una nueva entidad
   create(entityData: CreateEntityData): Promise<YourEntity>;
-  
+
   // 🔍 BUSCAR - Encontrar entidades
   findById(id: string): Promise<YourEntity | null>;
   findByOwnerId(ownerId: string): Promise<YourEntity[]>;
   findByStatus(status: string): Promise<YourEntity[]>;
   findActiveEntities(): Promise<YourEntity[]>;
-  
-  // ✏️ ACTUALIZAR - Modificar entidad existente  
+
+  // ✏️ ACTUALIZAR - Modificar entidad existente
   update(id: string, updateData: UpdateEntityData): Promise<YourEntity | null>;
-  
+
   // ❌ ELIMINAR - Borrar entidad
   delete(id: string): Promise<void>;
-  
+
   // 📊 CONSULTAS ESPECIALES - Para reportes o estadísticas
   countEntitiesByOwner(ownerId: string): Promise<number>;
   findEntitiesCreatedAfter(date: Date): Promise<YourEntity[]>;
@@ -233,14 +243,15 @@ export interface CreateEntityData {
 
 // ✏️ TIPOS DE DATOS para actualizar entidades
 export interface UpdateEntityData {
-  name?: string;        // Opcional
-  description?: string; // Opcional  
-  status?: string;      // Opcional
-  isActive?: boolean;   // Opcional
+  name?: string; // Opcional
+  description?: string; // Opcional
+  status?: string; // Opcional
+  isActive?: boolean; // Opcional
 }
 ```
 
 ### ¿Por qué definir interfaces?
+
 - **Flexibilidad**: Puedes cambiar de PostgreSQL a MySQL sin cambiar el código de negocio
 - **Testing**: Puedes crear implementaciones falsas para pruebas
 - **Claridad**: Define exactamente qué operaciones necesitas
@@ -253,8 +264,9 @@ export interface UpdateEntityData {
 Los **Tests de Contrato** son pruebas que validan que cualquier implementación de tu interface cumple con el comportamiento esperado. Son como un "examen" que toda implementación debe pasar.
 
 **En nuestro proyecto multi-BD:**
+
 - **Un solo test** se ejecuta contra PostgreSQL y MySQL
-- **Testcontainers** levanta contenedores efímeros automáticamente  
+- **Testcontainers** levanta contenedores efímeros automáticamente
 - **Variable de entorno** determina qué BD usar
 - **Misma implementación** debe pasar en ambas BDs
 
@@ -269,11 +281,11 @@ Los **Tests de Contrato** son pruebas que validan que cualquier implementación 
 export function makeYourEntityRepositoryContractTest(
   description: string,
   setupRepository: () => {
-    repository: IYourEntityRepository;           // La implementación a probar
-    cleanDatabase: () => Promise<void>;          // Función para limpiar la BD entre tests
+    repository: IYourEntityRepository; // La implementación a probar
+    cleanDatabase: () => Promise<void>; // Función para limpiar la BD entre tests
     verifyEntityInDatabase: (id: string) => Promise<boolean>; // Verificar que el dato existe en BD
   },
-  teardownRepository: () => Promise<void>        // Limpieza final
+  teardownRepository: () => Promise<void> // Limpieza final
 ) {
   describe(description, () => {
     let repository: IYourEntityRepository;
@@ -304,7 +316,7 @@ export function makeYourEntityRepositoryContractTest(
           description: 'Test Description',
           status: 'active',
           ownerId: 'user-123',
-          isActive: true
+          isActive: true,
         };
 
         // Act
@@ -332,7 +344,7 @@ export function makeYourEntityRepositoryContractTest(
           name: '', // Nombre vacío - debería fallar
           description: 'Test Description',
           status: 'active',
-          ownerId: 'user-123'
+          ownerId: 'user-123',
         };
 
         // Act & Assert
@@ -348,7 +360,7 @@ export function makeYourEntityRepositoryContractTest(
           name: 'Test Entity',
           description: 'Test Description',
           status: 'active',
-          ownerId: 'user-123'
+          ownerId: 'user-123',
         };
         const createdEntity = await repository.create(entityData);
 
@@ -378,33 +390,41 @@ export function makeYourEntityRepositoryContractTest(
           name: 'Original Name',
           description: 'Original Description',
           status: 'active',
-          ownerId: 'user-123'
+          ownerId: 'user-123',
         };
         const createdEntity = await repository.create(entityData);
 
         const updateData: UpdateEntityData = {
           name: 'Updated Name',
-          description: 'Updated Description'
+          description: 'Updated Description',
         };
 
         // Act
-        const updatedEntity = await repository.update(createdEntity.id, updateData);
+        const updatedEntity = await repository.update(
+          createdEntity.id,
+          updateData
+        );
 
         // Assert
         expect(updatedEntity).toBeDefined();
         expect(updatedEntity!.name).toBe(updateData.name);
         expect(updatedEntity!.description).toBe(updateData.description);
-        expect(updatedEntity!.updatedAt.getTime()).toBeGreaterThan(createdEntity.updatedAt.getTime());
+        expect(updatedEntity!.updatedAt.getTime()).toBeGreaterThan(
+          createdEntity.updatedAt.getTime()
+        );
       });
 
       it('should return null when updating non-existent entity', async () => {
         // Arrange
         const updateData: UpdateEntityData = {
-          name: 'Updated Name'
+          name: 'Updated Name',
         };
 
         // Act
-        const updatedEntity = await repository.update('non-existent-id', updateData);
+        const updatedEntity = await repository.update(
+          'non-existent-id',
+          updateData
+        );
 
         // Assert
         expect(updatedEntity).toBeNull();
@@ -419,7 +439,7 @@ export function makeYourEntityRepositoryContractTest(
           name: 'Entity to Delete',
           description: 'Will be deleted',
           status: 'active',
-          ownerId: 'user-123'
+          ownerId: 'user-123',
         };
         const createdEntity = await repository.create(entityData);
 
@@ -436,7 +456,9 @@ export function makeYourEntityRepositoryContractTest(
 
       it('should not throw error when deleting non-existent entity', async () => {
         // Act & Assert
-        await expect(repository.delete('non-existent-id')).resolves.not.toThrow();
+        await expect(
+          repository.delete('non-existent-id')
+        ).resolves.not.toThrow();
       });
     });
 
@@ -449,19 +471,19 @@ export function makeYourEntityRepositoryContractTest(
           name: 'Entity 1',
           description: 'Description 1',
           status: 'active',
-          ownerId: ownerId
+          ownerId: ownerId,
         };
         const entity2Data: CreateEntityData = {
           name: 'Entity 2',
           description: 'Description 2',
           status: 'inactive',
-          ownerId: ownerId
+          ownerId: ownerId,
         };
         const entity3Data: CreateEntityData = {
           name: 'Entity 3',
           description: 'Description 3',
           status: 'active',
-          ownerId: 'different-user'
+          ownerId: 'different-user',
         };
 
         await repository.create(entity1Data);
@@ -473,7 +495,9 @@ export function makeYourEntityRepositoryContractTest(
 
         // Assert
         expect(ownerEntities).toHaveLength(2);
-        expect(ownerEntities.every(entity => entity.ownerId === ownerId)).toBe(true);
+        expect(
+          ownerEntities.every((entity) => entity.ownerId === ownerId)
+        ).toBe(true);
       });
     });
   });
@@ -493,8 +517,13 @@ import { TestDatabaseUtils } from '../setup';
 makeYourEntityRepositoryContractTest(
   'YourEntityRepository Integration Tests - Contract',
   () => ({
-    repository: new YourEntityRepository(TestDatabaseUtils.createTestPrismaClient()),
-    cleanDatabase: () => TestDatabaseUtils.cleanDatabase(TestDatabaseUtils.createTestPrismaClient()),
+    repository: new YourEntityRepository(
+      TestDatabaseUtils.createTestPrismaClient()
+    ),
+    cleanDatabase: () =>
+      TestDatabaseUtils.cleanDatabase(
+        TestDatabaseUtils.createTestPrismaClient()
+      ),
     verifyEntityInDatabase: async (id: string) => {
       const prisma = TestDatabaseUtils.createTestPrismaClient();
       const entity = await prisma.yourEntity.findUnique({ where: { id } });
@@ -513,19 +542,22 @@ makeYourEntityRepositoryContractTest(
 **Estrategia: Un Test, Múltiples Bases de Datos**
 
 Usamos **Testcontainers** con configuración dinámica:
+
 - **Un solo archivo de test** que funciona para ambas BDs
 - **Variable de entorno** (`DATABASE_PROVIDER`) determina qué BD usar
 - **Testcontainers** levanta contenedores efímeros automáticamente
 - **Prisma** maneja ambas BDs con la misma implementación
 
 **Comandos de testing:**
+
 ```bash
 npm run test:integration:postgres  # Mismo test, contenedor PostgreSQL
-npm run test:integration:mysql     # Mismo test, contenedor MySQL  
+npm run test:integration:mysql     # Mismo test, contenedor MySQL
 npm run test:all-dbs              # Ejecuta ambos secuencialmente
 ```
 
 **¿Por qué funciona?**
+
 - **Tests de Contrato**: Validan comportamiento, no implementación específica
 - **Setup dinámico**: `__tests__/setup.ts` configura la BD según `DATABASE_PROVIDER`
 - **Una implementación**: Prisma + tests de contrato = garantía de consistencia
@@ -555,7 +587,7 @@ src/
 │           └── __tests__/         # Tests de contrato
 │               ├── IYourEntityRepository.contract.test.ts # ← Tests de contrato
 │               └── IUserRepository.contract.test.ts
-├── infrastructure/                # 🔧 IMPLEMENTACIONES TÉCNICAS  
+├── infrastructure/                # 🔧 IMPLEMENTACIONES TÉCNICAS
 │   └── database/                  # Implementaciones reales de repositories
 │       └── adapters/
 │           └── prisma/
@@ -576,24 +608,28 @@ src/
 ## Ejemplos de Adaptación para Diferentes Entidades
 
 ### Para un Sistema de Cursos:
+
 - **Entidad**: `Course` con propiedades como `sourceLanguage`, `targetLanguage`, `name`
 - **Value Objects**: `SourceLanguage`, `TargetLanguage`
 - **Repository**: `ICourseRepository` con métodos como `findBySourceLanguage()`, `findByTargetLanguage()`
 
 ### Para un Sistema de Ejercicios:
+
 - **Entidad**: `Exercise` con propiedades como `id`
 - **Value Objects**: `ExerciseType`
 - **Repository**: `IExerciseRepository` con métodos como `findByType()`
 
 ### Para un Sistema de Progreso:
+
 - **Entidad**: `UserProgress` con propiedades como `userId`, `experiencePoints`, `livesCurrent`
 - **Repository**: `IProgressRepository` con métodos como `findByUser()`
 
 ## ¿Qué sigue después de esta fase?
 
 Una vez que tengas:
+
 - ✅ Entidad definida (`YourEntity.ts`)
-- ✅ Value Objects creados (`EntityStatus.ts`, etc.)  
+- ✅ Value Objects creados (`EntityStatus.ts`, etc.)
 - ✅ Interface del Repository (`IYourEntityRepository.ts`)
 
 Pasas a la **Fase 2**: Escribir las pruebas ANTES de implementar el código real.

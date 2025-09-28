@@ -34,7 +34,11 @@ import {
   Prisma, // Sobre todo para errores específicos de Prisma
   // Aquí también puedes importar para mapear tipos si es necesario, como "User as PrismaUser", "Role as PrismaRole" , etc.
 } from '@/infrastructure/node_modules/.prisma/client'; // IMPORTANTE! Para este proyecto esta es la forma de importar el PrismaClient en los Repositiories
-import { IYourEntityRepository, CreateEntityData, UpdateEntityData } from '@/core/interfaces/repositories/IYourEntityRepository';
+import {
+  IYourEntityRepository,
+  CreateEntityData,
+  UpdateEntityData,
+} from '@/core/interfaces/repositories/IYourEntityRepository';
 import { YourEntity } from '@/core/domain/entities/YourEntity';
 import { EntityStatus } from '@/core/domain/value-objects/EntityStatus';
 
@@ -45,7 +49,7 @@ export class YourEntityRepository implements IYourEntityRepository {
   async create(entityData: CreateEntityData): Promise<YourEntity> {
     // Validar los datos usando los Value Objects
     const status = new EntityStatus(entityData.status);
-    
+
     // Crear en la base de datos usando Prisma
     const createdEntity = await this.prisma.yourEntity.create({
       data: {
@@ -80,7 +84,7 @@ export class YourEntityRepository implements IYourEntityRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return entities.map(entity => this.toDomainEntity(entity));
+    return entities.map((entity) => this.toDomainEntity(entity));
   }
 
   // 🔍 BUSCAR POR STATUS - Implementación real
@@ -93,24 +97,27 @@ export class YourEntityRepository implements IYourEntityRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return entities.map(entity => this.toDomainEntity(entity));
+    return entities.map((entity) => this.toDomainEntity(entity));
   }
 
   // 🔍 BUSCAR ACTIVAS - Implementación real
   async findActiveEntities(): Promise<YourEntity[]> {
     const entities = await this.prisma.yourEntity.findMany({
-      where: { 
+      where: {
         isActive: true,
-        status: 'active' // Solo las que están activas Y tienen status activo
+        status: 'active', // Solo las que están activas Y tienen status activo
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return entities.map(entity => this.toDomainEntity(entity));
+    return entities.map((entity) => this.toDomainEntity(entity));
   }
 
   // ✏️ ACTUALIZAR - Implementación real
-  async update(id: string, updateData: UpdateEntityData): Promise<YourEntity | null> {
+  async update(
+    id: string,
+    updateData: UpdateEntityData
+  ): Promise<YourEntity | null> {
     // Verificar que la entidad existe
     const existingEntity = await this.prisma.yourEntity.findUnique({
       where: { id },
@@ -141,12 +148,14 @@ export class YourEntityRepository implements IYourEntityRepository {
   async delete(id: string): Promise<void> {
     // Prisma no lanza error si el ID no existe, lo cual es perfecto
     // porque nuestro contrato especifica que no debe fallar
-    await this.prisma.yourEntity.delete({
-      where: { id },
-    }).catch(() => {
-      // Ignorar errores de "registro no encontrado"
-      // Esto hace que el método sea idempotente
-    });
+    await this.prisma.yourEntity
+      .delete({
+        where: { id },
+      })
+      .catch(() => {
+        // Ignorar errores de "registro no encontrado"
+        // Esto hace que el método sea idempotente
+      });
   }
 
   // 📊 CONSULTAS ESPECIALES - Implementaciones reales
@@ -166,12 +175,12 @@ export class YourEntityRepository implements IYourEntityRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return entities.map(entity => this.toDomainEntity(entity));
+    return entities.map((entity) => this.toDomainEntity(entity));
   }
 
   async findEntitiesWithStatus(statuses: string[]): Promise<YourEntity[]> {
     // Validar todos los statuses
-    statuses.forEach(status => new EntityStatus(status));
+    statuses.forEach((status) => new EntityStatus(status));
 
     const entities = await this.prisma.yourEntity.findMany({
       where: {
@@ -182,7 +191,7 @@ export class YourEntityRepository implements IYourEntityRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return entities.map(entity => this.toDomainEntity(entity));
+    return entities.map((entity) => this.toDomainEntity(entity));
   }
 
   // 🔄 MÉTODOS AUXILIARES PRIVADOS
@@ -270,7 +279,7 @@ async create(entityData: CreateEntityData): Promise<YourEntity> {
   if (!entityData.name || entityData.name.trim().length === 0) {
     throw new Error('Entity name cannot be empty');
   }
-  
+
   const status = new EntityStatus(entityData.status); // Esto ya valida
   // ... resto del código
 }
@@ -281,6 +290,7 @@ async create(entityData: CreateEntityData): Promise<YourEntity> {
 ### ¿Por qué validar en ambas bases de datos?
 
 Aunque Prisma es agnóstico de base de datos, pueden existir diferencias sutiles:
+
 - **Tipos de datos**: Algunos tipos se manejan diferente
 - **Constraints**: Validaciones a nivel de BD
 - **Performance**: Consultas pueden comportarse diferente
@@ -289,18 +299,21 @@ Aunque Prisma es agnóstico de base de datos, pueden existir diferencias sutiles
 ### Estrategia de validación
 
 **1. Tests pasan en PostgreSQL:**
+
 ```bash
 npm run test:integration:postgres
 # ✅ All tests passed
 ```
 
 **2. Tests pasan en MySQL:**
+
 ```bash
 npm run test:integration:mysql
 # ✅ All tests passed
 ```
 
 **3. Tests pasan en ambas:**
+
 ```bash
 npm run test:all-dbs
 # ✅ PostgreSQL: All tests passed
@@ -310,12 +323,14 @@ npm run test:all-dbs
 ### ¿Qué hacer si fallan en una BD pero no en otra?
 
 **Ejemplo común:**
+
 ```bash
 # PostgreSQL: ✅ All tests passed
 # MySQL: ❌ Error: Data too long for column 'description'
 ```
 
 **Solución:**
+
 1. **Identificar la diferencia** entre las BDs
 2. **Ajustar el código** para ser compatible con ambas
 3. **Actualizar validaciones** si es necesario
@@ -340,6 +355,7 @@ Una vez que tu implementación pasa todos los tests en ambas bases de datos, pue
 ### Tipos de refactoring comunes
 
 **1. Extraer métodos comunes:**
+
 ```typescript
 // Antes: Código duplicado
 async findByStatus(status: string): Promise<YourEntity[]> {
@@ -367,6 +383,7 @@ private async findEntitiesWithCondition(where: any): Promise<YourEntity[]> {
 ```
 
 **2. Mejorar manejo de errores:**
+
 ```typescript
 // Antes: Error genérico
 catch (error) {
@@ -383,6 +400,7 @@ catch (error) {
 ```
 
 **3. Optimizar consultas:**
+
 ```typescript
 // Antes: Múltiples consultas
 const entity = await this.findById(id);
@@ -425,6 +443,7 @@ npm run format
 ## ¿Qué sigue después de esta fase?
 
 Una vez que tengas:
+
 - ✅ Repository implementado y funcionando
 - ✅ Tests pasando en ambas bases de datos
 - ✅ Código refactorizado y limpio

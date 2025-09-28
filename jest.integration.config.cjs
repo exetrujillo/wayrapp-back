@@ -11,17 +11,23 @@ module.exports = {
   // Configuración más agresiva para transformar módulos ES
   transformIgnorePatterns: [
     // Transforma todos los módulos excepto los que están explícitamente excluidos
-    '/node_modules/(?!.*)'
+    '/node_modules/(?!.*)',
   ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
-      useESM: false
-    }],
-    '^.+\\.(js|jsx|mjs|cjs)$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
-      useESM: false
-    }],
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+        useESM: false,
+      },
+    ],
+    '^.+\\.(js|jsx|mjs|cjs)$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+        useESM: false,
+      },
+    ],
   },
   // Mapea módulos problemáticos
   moduleNameMapper: {
@@ -30,7 +36,16 @@ module.exports = {
     '^uuid$': '<rootDir>/__tests__/uuid-wrapper.cjs',
   },
   // Configura extensiones de archivo
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mjs', 'cjs'],
+  moduleFileExtensions: [
+    'ts',
+    'tsx',
+    'js',
+    'jsx',
+    'json',
+    'node',
+    'mjs',
+    'cjs',
+  ],
   // Configuración adicional para manejar módulos ES
-  extensionsToTreatAsEsm: []
+  extensionsToTreatAsEsm: [],
 };

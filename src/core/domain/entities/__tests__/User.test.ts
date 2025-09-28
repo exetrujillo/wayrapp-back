@@ -292,7 +292,7 @@ describe('User Entity', () => {
           validDate,
           validDate
         );
-      }).toThrow('Password hash inválido');
+      }).toThrow('El usuario debe tener un hash de contraseña válido');
 
       expect(() => {
         new User(
@@ -303,7 +303,7 @@ describe('User Entity', () => {
           validDate,
           validDate
         );
-      }).toThrow('Password hash inválido');
+      }).toThrow('El usuario debe tener un hash de contraseña válido');
     });
 
     it('debería lanzar error con fechas inválidas', () => {

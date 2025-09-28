@@ -1,5 +1,6 @@
 // src/core/domain/entities/User.ts
 
+// Importamos primero los value objects necesarios
 import { Email } from '@/core/domain/value-objects/Email';
 import { Role } from '@/core/domain/value-objects/Role';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
@@ -52,7 +53,13 @@ export class User {
     return this.passwordHash.value;
   }
 
+  /*
+   * Validaciones adicionales en el constructor
+   * para asegurar la integridad del objeto User
+   * y evitar estados inválidos.
+   */
   private validateConstructorParams(): void {
+    // Validaciones de estructura
     if (
       !this.id ||
       typeof this.id !== 'string' ||
@@ -61,10 +68,22 @@ export class User {
       throw new Error('ID de usuario inválido');
     }
 
-    if (!this.passwordHash || !(this.passwordHash instanceof HashedPassword)) {
-      throw new Error('Password hash inválido');
+    // Validaciones de value objects (no son estrictamente necesarias
+    // si los value objects ya hacen sus propias validaciones,
+    // pero añaden una capa extra de seguridad)
+    if (!this.email || !(this.email instanceof Email)) {
+      throw new Error('El usuario debe tener un email válido');
     }
 
+    if (!this.role || !(this.role instanceof Role)) {
+      throw new Error('El usuario debe tener un rol válido asignado');
+    }
+
+    if (!this.passwordHash || !(this.passwordHash instanceof HashedPassword)) {
+      throw new Error('El usuario debe tener un hash de contraseña válido');
+    }
+
+    // Validaciones de fechas
     if (!this.createdAt || !(this.createdAt instanceof Date)) {
       throw new Error('Fecha de creación inválida');
     }
