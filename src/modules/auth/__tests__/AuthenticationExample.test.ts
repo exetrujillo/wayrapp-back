@@ -1,8 +1,8 @@
 // src/modules/auth/__tests__/AuthenticationExample.test.ts
 
-import { v4 as uuidv4 } from 'uuid';
 import { User } from '@/core/domain/entities/User';
 import { Email } from '@/core/domain/value-objects/Email';
+import { Username } from '@/core/domain/value-objects/Username';
 import { Role } from '@/core/domain/value-objects/Role';
 import { PlainPassword } from '@/core/domain/value-objects/Password';
 import { PasswordService } from '@/infrastructure/services/PasswordService';
@@ -36,13 +36,11 @@ describe('Authentication Example with Real bcrypt', () => {
       const hashedPassword = await passwordService.hash(plainPassword);
 
       // 3. Crear la entidad User
-      const user = new User(
-        uuidv4(),
+      const user = User.create(
         email,
+        new Username('newuser'),
         hashedPassword,
-        role,
-        new Date(),
-        new Date()
+        role
       );
 
       // Verificaciones
@@ -67,13 +65,11 @@ describe('Authentication Example with Real bcrypt', () => {
       const plainPassword = new PlainPassword(originalPassword);
       const hashedPassword = await passwordService.hash(plainPassword);
 
-      registeredUser = new User(
-        uuidv4(),
+      registeredUser = User.create(
         new Email('loginuser@example.com'),
+        new Username('loginuser'),
         hashedPassword,
-        new Role('content_creator'),
-        new Date(),
-        new Date()
+        new Role('content_creator')
       );
     });
 
@@ -150,13 +146,11 @@ describe('Authentication Example with Real bcrypt', () => {
       const currentHashedPassword =
         await passwordService.hash(plainCurrentPassword);
 
-      let user = new User(
-        uuidv4(),
+      let user = User.create(
         new Email('changepass@example.com'),
+        new Username('changepass'),
         currentHashedPassword,
-        new Role('admin'),
-        new Date(),
-        new Date()
+        new Role('admin')
       );
 
       // 1. Verificar contraseña actual
@@ -171,11 +165,13 @@ describe('Authentication Example with Real bcrypt', () => {
       const newHashedPassword = await passwordService.hash(plainNewPassword);
 
       // 3. Actualizar usuario (en un caso real, esto actualizaría la base de datos)
-      user = new User(
+      user = User.fromPersistence(
         user.id,
         user.email,
+        user.username,
         newHashedPassword,
         user.role,
+        user.countryCode,
         user.createdAt,
         new Date() // updatedAt actualizado
       );

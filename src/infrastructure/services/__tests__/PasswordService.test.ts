@@ -172,6 +172,6 @@ describe('PasswordService', () => {
       // Verificación cruzada también debería funcionar
       expect(await service12.verify(plainPassword, hash10)).toBe(true);
       expect(await service10.verify(plainPassword, hash12)).toBe(true);
-    });
+    }, 15000); // Timeout de 15 segundos para este test intensivo
   });
 });

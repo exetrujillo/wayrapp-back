@@ -6,6 +6,8 @@ import { User } from '@/core/domain/entities/User';
 import { Email } from '@/core/domain/value-objects/Email';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
 import { Role } from '@/core/domain/value-objects/Role';
+import { Username } from '@/core/domain/value-objects/Username';
+import { CountryCode } from '@/core/domain/value-objects/CountryCode';
 
 /**
  * Función de test de contrato para IUserRepository.
@@ -54,10 +56,12 @@ export function makeUserRepositoryContractTest(
         // Datos básicos para crear el usuario
         const userData = {
           email: new Email('contract-test@example.com'),
+          username: new Username('contract_user'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
           role: new Role('student'),
+          countryCode: new CountryCode('US'),
         };
 
         const createdUser = await userRepository.create(userData);
@@ -67,12 +71,16 @@ export function makeUserRepositoryContractTest(
         expect(typeof createdUser.id).toBe('string');
         expect(createdUser.email).toBeInstanceOf(Email);
         expect(createdUser.email.value).toBe(userData.email.value);
+        expect(createdUser.username).toBeInstanceOf(Username);
+        expect(createdUser.username.value).toBe(userData.username.value);
         expect(createdUser.passwordHash).toBeInstanceOf(HashedPassword);
         expect(createdUser.passwordHash.value).toBe(
           userData.passwordHash.value
         );
         expect(createdUser.role).toBeInstanceOf(Role);
         expect(createdUser.role.value).toBe(userData.role.value);
+        expect(createdUser.countryCode).toBeInstanceOf(CountryCode);
+        expect(createdUser.countryCode?.value).toBe(userData.countryCode.value);
         expect(createdUser.createdAt).toBeInstanceOf(Date);
         expect(createdUser.updatedAt).toBeInstanceOf(Date);
 
@@ -86,10 +94,12 @@ export function makeUserRepositoryContractTest(
       it('debería encontrar un usuario por su ID', async () => {
         const userData = {
           email: new Email('findbyid-test@example.com'),
+          username: new Username('findbyid_user'),
           passwordHash: new HashedPassword(
-            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+            '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5DDu.'
           ),
           role: new Role('student'),
+          countryCode: new CountryCode('BR'),
         };
 
         const createdUser = await userRepository.create(userData);
@@ -115,6 +125,7 @@ export function makeUserRepositoryContractTest(
       it('debería encontrar un usuario por su email', async () => {
         const userData = {
           email: new Email('findbyemail-test@example.com'),
+          username: new Username('findbyemail_user'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -147,6 +158,7 @@ export function makeUserRepositoryContractTest(
       it('debería actualizar un usuario existente', async () => {
         const userData = {
           email: new Email('update-test@example.com'),
+          username: new Username('update_user'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -191,6 +203,7 @@ export function makeUserRepositoryContractTest(
       it('debería eliminar un usuario existente', async () => {
         const userData = {
           email: new Email('delete-test@example.com'),
+          username: new Username('delete_user'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -230,6 +243,7 @@ export function makeUserRepositoryContractTest(
         // Crear algunos usuarios
         const userData1 = {
           email: new Email('contract-test@example.com'),
+          username: new Username('count_user1'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -237,6 +251,7 @@ export function makeUserRepositoryContractTest(
         };
         const userData2 = {
           email: new Email('contract-test2@example.com'),
+          username: new Username('count_user2'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -257,6 +272,7 @@ export function makeUserRepositoryContractTest(
         // Crear algunos usuarios
         const userData1 = {
           email: new Email('contract-test@example.com'),
+          username: new Username('role_test_user1'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -264,6 +280,7 @@ export function makeUserRepositoryContractTest(
         };
         const userData2 = {
           email: new Email('contract-test2@example.com'),
+          username: new Username('role_test_user2'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
@@ -271,6 +288,7 @@ export function makeUserRepositoryContractTest(
         };
         const userData3 = {
           email: new Email('contract-test3@example.com'),
+          username: new Username('role_test_user3'),
           passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),

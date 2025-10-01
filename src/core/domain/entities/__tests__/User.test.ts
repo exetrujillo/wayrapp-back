@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { User } from '@/core/domain/entities/User';
 import { Email } from '@/core/domain/value-objects/Email';
 import { Role } from '@/core/domain/value-objects/Role';
+import { Username } from '@/core/domain/value-objects/Username';
+import { CountryCode } from '@/core/domain/value-objects/CountryCode';
 import {
   PlainPassword,
   HashedPassword,
@@ -17,60 +19,117 @@ describe('User Entity', () => {
     passwordService = new PasswordService(12);
   });
 
-  describe('constructor', () => {
-    it('debería crear un usuario válido con value objects', async () => {
+  describe('factory methods', () => {
+    it('debería crear un usuario válido con User.create()', async () => {
+      const email = new Email('test@example.com');
+      const username = new Username('testuser');
+      const role = new Role('student');
+      const countryCode = new CountryCode('US');
+      const plainPassword = new PlainPassword('TestPass123!');
+      const passwordHash = await passwordService.hash(plainPassword);
+
+      const user = User.create(
+        email,
+        username,
+        passwordHash,
+        role,
+        countryCode
+      );
+
+      expect(user.id).toBeDefined();
+      expect(typeof user.id).toBe('string');
+      expect(user.email).toBe(email);
+      expect(user.username).toBe(username);
+      expect(user.role).toBe(role);
+      expect(user.countryCode).toBe(countryCode);
+      expect(user.passwordHash).toBe(passwordHash);
+      expect(user.createdAt).toBeInstanceOf(Date);
+      expect(user.updatedAt).toBeInstanceOf(Date);
+      expect(user.createdAt.getTime()).toBeLessThanOrEqual(
+        user.updatedAt.getTime()
+      );
+    });
+
+    it('debería crear un usuario con ID específico usando User.create()', async () => {
       const id = uuidv4();
       const email = new Email('test@example.com');
+      const username = new Username('testuser');
       const role = new Role('student');
       const plainPassword = new PlainPassword('TestPass123!');
       const passwordHash = await passwordService.hash(plainPassword);
-      const now = new Date();
 
-      const user = new User(id, email, passwordHash, role, now, now);
+      const user = User.create(email, username, passwordHash, role, null, id);
 
       expect(user.id).toBe(id);
       expect(user.email).toBe(email);
+      expect(user.username).toBe(username);
       expect(user.role).toBe(role);
+      expect(user.countryCode).toBe(null);
       expect(user.passwordHash).toBe(passwordHash);
-      expect(user.createdAt).toBe(now);
-      expect(user.updatedAt).toBe(now);
     });
 
-    it('debería crear usuarios con diferentes roles', async () => {
+    it('debería reconstruir un usuario desde persistencia con User.fromPersistence()', async () => {
+      const id = uuidv4();
+      const email = new Email('test@example.com');
+      const username = new Username('testuser');
+      const role = new Role('student');
+      const countryCode = new CountryCode('BR');
+      const plainPassword = new PlainPassword('TestPass123!');
+      const passwordHash = await passwordService.hash(plainPassword);
+      const createdAt = new Date('2023-01-01');
+      const updatedAt = new Date('2023-01-02');
+
+      const user = User.fromPersistence(
+        id,
+        email,
+        username,
+        passwordHash,
+        role,
+        countryCode,
+        createdAt,
+        updatedAt
+      );
+
+      expect(user.id).toBe(id);
+      expect(user.email).toBe(email);
+      expect(user.username).toBe(username);
+      expect(user.role).toBe(role);
+      expect(user.countryCode).toBe(countryCode);
+      expect(user.passwordHash).toBe(passwordHash);
+      expect(user.createdAt).toBe(createdAt);
+      expect(user.updatedAt).toBe(updatedAt);
+    });
+
+    it('debería crear usuarios con diferentes roles usando User.create()', async () => {
       const validRoleStrings = ['student', 'content_creator', 'admin'];
 
       for (const roleString of validRoleStrings) {
         const role = new Role(roleString);
         const email = new Email(`${roleString}@example.com`);
+        const username = new Username(`${roleString}_user`);
         const plainPassword = new PlainPassword(`${roleString}Pass123!`);
         const passwordHash = await passwordService.hash(plainPassword);
 
-        const user = new User(
-          uuidv4(),
-          email,
-          passwordHash,
-          role,
-          new Date(),
-          new Date()
-        );
+        const user = User.create(email, username, passwordHash, role);
 
         expect(user.role.value).toBe(roleString);
         expect(user.email.value).toBe(`${roleString}@example.com`);
+        expect(user.username.value).toBe(`${roleString}_user`);
         expect(user.passwordHash.isBcryptHash()).toBe(true);
+        expect(user.id).toBeDefined();
       }
     });
   });
 
   describe('getters', () => {
     it('debería exponer propiedades correctamente', async () => {
-      const id = uuidv4();
       const email = new Email('test@example.com');
+      const username = new Username('testuser');
       const role = new Role('student');
       const plainPassword = new PlainPassword('TestPass123!');
       const passwordHash = await passwordService.hash(plainPassword);
-      const now = new Date();
 
-      const user = new User(id, email, passwordHash, role, now, now);
+      const user = User.create(email, username, passwordHash, role);
 
       // Validar que el ID es un UUID válido (formato v4)
       const uuidRegex =
@@ -91,16 +150,16 @@ describe('User Entity', () => {
 
   describe('domain methods', () => {
     it('debería mantener timestamps coherentes', async () => {
-      const now = new Date();
       const email = new Email('timestamp-test@example.com');
+      const username = new Username('timestamp_user');
       const role = new Role('student');
       const plainPassword = new PlainPassword('TimestampPass123!');
       const passwordHash = await passwordService.hash(plainPassword);
 
-      const user = new User(uuidv4(), email, passwordHash, role, now, now);
+      const user = User.create(email, username, passwordHash, role);
 
-      expect(user.createdAt).toBe(now);
-      expect(user.updatedAt).toBe(now);
+      expect(user.createdAt).toBeInstanceOf(Date);
+      expect(user.updatedAt).toBeInstanceOf(Date);
       expect(user.createdAt.getTime()).toBeLessThanOrEqual(
         user.updatedAt.getTime()
       );
@@ -110,22 +169,18 @@ describe('User Entity', () => {
       const plainPassword1 = new PlainPassword('User1Pass123!');
       const plainPassword2 = new PlainPassword('User2Pass456@');
 
-      const user1 = new User(
-        uuidv4(),
+      const user1 = User.create(
         new Email('user1@example.com'),
+        new Username('user1'),
         await passwordService.hash(plainPassword1),
-        new Role('student'),
-        new Date(),
-        new Date()
+        new Role('student')
       );
 
-      const user2 = new User(
-        uuidv4(),
+      const user2 = User.create(
         new Email('user2@example.com'),
+        new Username('user2'),
         await passwordService.hash(plainPassword2),
-        new Role('content_creator'),
-        new Date(),
-        new Date()
+        new Role('content_creator')
       );
 
       expect(user1.id).not.toBe(user2.id);
@@ -143,22 +198,18 @@ describe('User Entity', () => {
       const studentPlainPassword = new PlainPassword('StudentPass123!');
       const adminPlainPassword = new PlainPassword('AdminPass456@');
 
-      const studentUser = new User(
-        uuidv4(),
+      const studentUser = User.create(
         new Email('student@example.com'),
+        new Username('student_user'),
         await passwordService.hash(studentPlainPassword),
-        new Role('student'),
-        new Date(),
-        new Date()
+        new Role('student')
       );
 
-      const adminUser = new User(
-        uuidv4(),
+      const adminUser = User.create(
         new Email('admin@example.com'),
+        new Username('admin_user'),
         await passwordService.hash(adminPlainPassword),
-        new Role('admin'),
-        new Date(),
-        new Date()
+        new Role('admin')
       );
 
       expect(studentUser.role.isStudent()).toBe(true);
@@ -174,31 +225,25 @@ describe('User Entity', () => {
       const creatorPlainPassword = new PlainPassword('CreatorPass456@');
       const adminPlainPassword = new PlainPassword('AdminPass789#');
 
-      const studentUser = new User(
-        uuidv4(),
+      const studentUser = User.create(
         new Email('student@example.com'),
+        new Username('student_user'),
         await passwordService.hash(studentPlainPassword),
-        new Role('student'),
-        new Date(),
-        new Date()
+        new Role('student')
       );
 
-      const contentCreatorUser = new User(
-        uuidv4(),
+      const contentCreatorUser = User.create(
         new Email('creator@example.com'),
+        new Username('creator_user'),
         await passwordService.hash(creatorPlainPassword),
-        new Role('content_creator'),
-        new Date(),
-        new Date()
+        new Role('content_creator')
       );
 
-      const adminUser = new User(
-        uuidv4(),
+      const adminUser = User.create(
         new Email('admin@example.com'),
+        new Username('admin_user'),
         await passwordService.hash(adminPlainPassword),
-        new Role('admin'),
-        new Date(),
-        new Date()
+        new Role('admin')
       );
 
       // Test métodos delegados de User
@@ -244,102 +289,122 @@ describe('User Entity', () => {
     });
   });
 
-  describe('validaciones del constructor', () => {
+  describe('validaciones de factory methods', () => {
     let validEmail: Email;
+    let validUsername: Username;
     let validRole: Role;
     let validPasswordHash: HashedPassword;
-    let validDate: Date;
 
     beforeAll(async () => {
       validEmail = new Email('test@example.com');
+      validUsername = new Username('testuser');
       validRole = new Role('student');
       const plainPassword = new PlainPassword('ValidPass123!');
       validPasswordHash = await passwordService.hash(plainPassword);
-      validDate = new Date();
     });
 
-    it('debería lanzar error con ID inválido', () => {
+    it('debería lanzar error con ID inválido en fromPersistence', () => {
+      const validDate = new Date();
+
       expect(() => {
-        new User(
+        User.fromPersistence(
           '',
           validEmail,
+          validUsername,
           validPasswordHash,
           validRole,
+          null,
           validDate,
           validDate
         );
       }).toThrow('ID de usuario inválido');
 
       expect(() => {
-        new User(
+        User.fromPersistence(
           '   ',
           validEmail,
+          validUsername,
           validPasswordHash,
           validRole,
+          null,
           validDate,
           validDate
         );
       }).toThrow('ID de usuario inválido');
     });
 
-    it('debería lanzar error con passwordHash inválido', () => {
+    it('debería lanzar error con passwordHash inválido en fromPersistence', () => {
+      const validDate = new Date();
+
       expect(() => {
-        new User(
+        User.fromPersistence(
           uuidv4(),
           validEmail,
+          validUsername,
           null as unknown as HashedPassword,
           validRole,
+          null,
           validDate,
           validDate
         );
       }).toThrow('El usuario debe tener un hash de contraseña válido');
 
       expect(() => {
-        new User(
+        User.fromPersistence(
           uuidv4(),
           validEmail,
+          validUsername,
           'invalid' as unknown as HashedPassword,
           validRole,
+          null,
           validDate,
           validDate
         );
       }).toThrow('El usuario debe tener un hash de contraseña válido');
     });
 
-    it('debería lanzar error con fechas inválidas', () => {
+    it('debería lanzar error con fechas inválidas en fromPersistence', () => {
+      const validDate = new Date();
+
       expect(() => {
-        new User(
+        User.fromPersistence(
           uuidv4(),
           validEmail,
+          validUsername,
           validPasswordHash,
           validRole,
+          null,
           null as unknown as Date,
           validDate
         );
       }).toThrow('Fecha de creación inválida');
 
       expect(() => {
-        new User(
+        User.fromPersistence(
           uuidv4(),
           validEmail,
+          validUsername,
           validPasswordHash,
           validRole,
+          null,
           validDate,
           null as unknown as Date
         );
       }).toThrow('Fecha de actualización inválida');
     });
 
-    it('debería lanzar error si updatedAt es anterior a createdAt', () => {
+    it('debería lanzar error si updatedAt es anterior a createdAt en fromPersistence', () => {
       const createdAt = new Date('2023-01-02');
       const updatedAt = new Date('2023-01-01');
 
       expect(() => {
-        new User(
+        User.fromPersistence(
           uuidv4(),
           validEmail,
+          validUsername,
           validPasswordHash,
           validRole,
+          null,
           createdAt,
           updatedAt
         );
@@ -354,13 +419,11 @@ describe('User Entity', () => {
         const plainPassword = new PlainPassword('UserRegistration123!');
         const hashedPassword = await passwordService.hash(plainPassword);
 
-        const user = new User(
-          uuidv4(),
+        const user = User.create(
           new Email('integration@example.com'),
+          new Username('integration_user'),
           hashedPassword,
-          new Role('student'),
-          new Date(),
-          new Date()
+          new Role('student')
         );
 
         // Verificar que el usuario se creó correctamente
@@ -394,13 +457,11 @@ describe('User Entity', () => {
           const plainPassword = new PlainPassword(passwords[i]);
           const hashedPassword = await passwordService.hash(plainPassword);
 
-          const user = new User(
-            uuidv4(),
+          const user = User.create(
             new Email(`user${i + 1}@example.com`),
+            new Username(`user${i + 1}`),
             hashedPassword,
-            new Role('student'),
-            new Date(),
-            new Date()
+            new Role('student')
           );
 
           users.push({ user, plainPassword });
@@ -428,6 +489,74 @@ describe('User Entity', () => {
           }
         }
       });
+    });
+  });
+
+  describe('nuevos value objects integrados', () => {
+    it('debería manejar correctamente Username y CountryCode', async () => {
+      const email = new Email('newuser@example.com');
+      const username = new Username('nuevo_usuario');
+      const countryCode = new CountryCode('AR');
+      const role = new Role('student');
+      const plainPassword = new PlainPassword('NewUserPass123!');
+      const passwordHash = await passwordService.hash(plainPassword);
+
+      const user = User.create(
+        email,
+        username,
+        passwordHash,
+        role,
+        countryCode
+      );
+
+      // Test métodos getter de los nuevos value objects
+      expect(user.getUsernameValue()).toBe('nuevo_usuario');
+      expect(user.getCountryCodeValue()).toBe('AR');
+      expect(user.getCountryName()).toBe('Argentina');
+      expect(user.getCountryFlag()).toBe('🇦🇷');
+
+      // Test métodos de clasificación geográfica
+      expect(user.isFromSouthAmerica()).toBe(true);
+      expect(user.isFromNorthAmerica()).toBe(false);
+      expect(user.isFromEurope()).toBe(false);
+    });
+
+    it('debería manejar correctamente usuarios sin país', async () => {
+      const email = new Email('noCountry@example.com');
+      const username = new Username('sin_pais');
+      const role = new Role('student');
+      const plainPassword = new PlainPassword('NoCountryPass123!');
+      const passwordHash = await passwordService.hash(plainPassword);
+
+      const user = User.create(email, username, passwordHash, role); // Sin countryCode
+
+      expect(user.getCountryCodeValue()).toBe(null);
+      expect(user.getCountryName()).toBe(null);
+      expect(user.getCountryFlag()).toBe(null);
+      expect(user.isFromSouthAmerica()).toBe(false);
+    });
+
+    it('debería validar correctamente países transcontinentales', async () => {
+      const email = new Email('russian@example.com');
+      const username = new Username('usuario_ruso');
+      const countryCode = new CountryCode('RU');
+      const role = new Role('content_creator');
+      const plainPassword = new PlainPassword('RussianPass123!');
+      const passwordHash = await passwordService.hash(plainPassword);
+
+      const user = User.create(
+        email,
+        username,
+        passwordHash,
+        role,
+        countryCode
+      );
+
+      expect(user.getCountryName()).toBe('Россия');
+      expect(user.isFromEurope()).toBe(true);
+      expect(user.isFromAsia()).toBe(true); // Rusia es transcontinental
+      expect(user.countryCode?.isTranscontinental()).toBe(true);
+      expect(user.countryCode?.getPrimaryContinent()).toBe('Asia');
     });
   });
 });

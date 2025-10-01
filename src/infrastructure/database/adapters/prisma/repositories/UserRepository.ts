@@ -3,7 +3,6 @@
 import {
   PrismaClient,
   Prisma,
-  User as PrismaUser,
   Role as PrismaRole,
 } from '@/infrastructure/node_modules/.prisma/client';
 import { IUserRepository } from '@/core/interfaces/repositories/IUserRepository';
@@ -11,6 +10,8 @@ import { User } from '@/core/domain/entities/User';
 import { Email } from '@/core/domain/value-objects/Email';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
 import { Role } from '@/core/domain/value-objects/Role';
+import { Username } from '@/core/domain/value-objects/Username';
+import { CountryCode } from '@/core/domain/value-objects/CountryCode';
 
 /**
  * Errores específicos de Prisma para manejo de errores mejorado
@@ -68,8 +69,10 @@ export class UserRepository implements IUserRepository {
 
   async create(userData: {
     email: Email;
+    username: Username;
     passwordHash: HashedPassword;
     role: Role;
+    countryCode?: CountryCode | null;
   }): Promise<User> {
     const startTime = Date.now();
     this.logger.log(
@@ -80,8 +83,10 @@ export class UserRepository implements IUserRepository {
       // La entidad se crea a sí misma con UUID
       const user = User.create(
         userData.email,
+        userData.username,
         userData.passwordHash,
-        userData.role
+        userData.role,
+        userData.countryCode
       );
 
       // Repository solo persiste lo que la entidad ya definió
@@ -89,8 +94,10 @@ export class UserRepository implements IUserRepository {
         data: {
           id: user.id,
           email: user.getEmailValue(),
+          username: user.getUsernameValue(),
           passwordHash: user.getPasswordHashValue(),
           role: this.mapRoleToEnum(user.getRoleValue()),
+          countryCode: user.getCountryCodeValue(),
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
@@ -142,8 +149,10 @@ export class UserRepository implements IUserRepository {
         select: {
           id: true,
           email: true,
+          username: true,
           passwordHash: true,
           role: true,
+          countryCode: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -191,8 +200,10 @@ export class UserRepository implements IUserRepository {
         select: {
           id: true,
           email: true,
+          username: true,
           passwordHash: true,
           role: true,
+          countryCode: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -237,18 +248,26 @@ export class UserRepository implements IUserRepository {
       // Mapear value objects a primitivos para la actualización
       const updateData: {
         email?: string;
+        username?: string;
         passwordHash?: string;
         role?: PrismaRole;
+        countryCode?: string | null;
       } = {};
 
       if (userData.email) {
         updateData.email = userData.email.value;
+      }
+      if (userData.username) {
+        updateData.username = userData.username.value;
       }
       if (userData.passwordHash) {
         updateData.passwordHash = userData.passwordHash.value;
       }
       if (userData.role) {
         updateData.role = this.mapRoleToEnum(userData.role.value);
+      }
+      if (userData.countryCode !== undefined) {
+        updateData.countryCode = userData.countryCode?.value || null;
       }
 
       const updatedUser = await this.prisma.user.update({
@@ -258,8 +277,10 @@ export class UserRepository implements IUserRepository {
         select: {
           id: true,
           email: true,
+          username: true,
           passwordHash: true,
           role: true,
+          countryCode: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -404,8 +425,10 @@ export class UserRepository implements IUserRepository {
         select: {
           id: true,
           email: true,
+          username: true,
           passwordHash: true,
           role: true,
+          countryCode: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -438,12 +461,23 @@ export class UserRepository implements IUserRepository {
   /**
    * Mapea un objeto Prisma User a una entidad de dominio User
    */
-  private mapToUser(prismaUser: PrismaUser): User {
+  private mapToUser(prismaUser: {
+    id: string;
+    email: string;
+    username: string;
+    passwordHash: string;
+    role: PrismaRole;
+    countryCode: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): User {
     return User.fromPersistence(
       prismaUser.id,
       new Email(prismaUser.email),
+      new Username(prismaUser.username),
       new HashedPassword(prismaUser.passwordHash),
       new Role(this.mapEnumToRole(prismaUser.role)),
+      prismaUser.countryCode ? new CountryCode(prismaUser.countryCode) : null,
       prismaUser.createdAt,
       prismaUser.updatedAt
     );
@@ -512,33 +546,254 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  /**
-   * Obtiene estadísticas de la base de datos para monitoreo
-   */
-  async getStats(): Promise<{ totalUsers: number; queryTime: number }> {
+  async findByUsername(username: string): Promise<User | null> {
     const startTime = Date.now();
     this.logger.log(
-      '[UserRepository] Obteniendo estadísticas de la base de datos...'
+      `[UserRepository] Encontrando usuario por username: ${username}`
     );
 
     try {
-      const totalUsers = await this.prisma.user.count();
-      const queryTime = Date.now() - startTime;
+      const user = await this.prisma.user.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          passwordHash: true,
+          role: true,
+          countryCode: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const duration = Date.now() - startTime;
+
+      if (!user) {
+        this.logger.log(
+          `[UserRepository] Usuario no encontrado por username: ${username} (${duration}ms)`
+        );
+        return null;
+      }
 
       this.logger.log(
-        `[UserRepository] Estadísticas de la base de datos recuperadas en ${queryTime}ms: ${totalUsers} usuarios`
+        `[UserRepository] Usuario encontrado por username: ${username} en ${duration}ms`
       );
-
-      return { totalUsers, queryTime };
+      return this.mapToUser(user);
     } catch (error) {
-      const queryTime = Date.now() - startTime;
+      const duration = Date.now() - startTime;
       this.logger.error(
-        `[UserRepository] Fallo al obtener estadísticas de la base de datos después de ${queryTime}ms:`,
+        `[UserRepository] Fallo al encontrar usuario por username: ${username} después de ${duration}ms:`,
         error
       );
 
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
       throw new UserRepositoryError(
-        `No se pudieron obtener estadísticas de la base de datos: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        `Fallo al encontrar usuario por username: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async findUsersByCountry(countryCode: string): Promise<User[]> {
+    const startTime = Date.now();
+    this.logger.log(
+      `[UserRepository] Encontrando usuarios por país: ${countryCode}`
+    );
+
+    try {
+      const users = await this.prisma.user.findMany({
+        where: { countryCode },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          passwordHash: true,
+          role: true,
+          countryCode: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Encontrados ${users.length} usuarios del país ${countryCode} en ${duration}ms`
+      );
+
+      return users.map(this.mapToUser.bind(this));
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al encontrar usuarios por país: ${countryCode} después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al encontrar usuarios por país: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async findUsersByContinent(continent: string): Promise<User[]> {
+    const startTime = Date.now();
+    this.logger.log(
+      `[UserRepository] Encontrando usuarios por continente: ${continent}`
+    );
+
+    try {
+      // Obtener todos los usuarios con país
+      const users = await this.prisma.user.findMany({
+        where: {
+          countryCode: { not: null },
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          passwordHash: true,
+          role: true,
+          countryCode: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      // Filtrar por continente usando la lógica de CountryCode
+      const filteredUsers = users.filter((user) => {
+        if (!user.countryCode) return false;
+        try {
+          const countryCodeObj = new CountryCode(user.countryCode);
+          return countryCodeObj.getPrimaryContinent() === continent;
+        } catch {
+          return false;
+        }
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Encontrados ${filteredUsers.length} usuarios del continente ${continent} en ${duration}ms`
+      );
+
+      return filteredUsers.map(this.mapToUser.bind(this));
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al encontrar usuarios por continente: ${continent} después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al encontrar usuarios por continente: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async getUserStatsByContinent(): Promise<Record<string, number>> {
+    const startTime = Date.now();
+    this.logger.log('[UserRepository] Obteniendo estadísticas por continente');
+
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          countryCode: { not: null },
+        },
+        select: {
+          countryCode: true,
+        },
+      });
+
+      const stats: Record<string, number> = {};
+
+      users.forEach((user) => {
+        if (!user.countryCode) return;
+        try {
+          const countryCodeObj = new CountryCode(user.countryCode);
+          const continent = countryCodeObj.getPrimaryContinent();
+          stats[continent] = (stats[continent] || 0) + 1;
+        } catch {
+          // Ignorar códigos de país inválidos
+        }
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Estadísticas por continente obtenidas en ${duration}ms`
+      );
+
+      return stats;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al obtener estadísticas por continente después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al obtener estadísticas por continente: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async getUserStatsByCountry(): Promise<Record<string, number>> {
+    const startTime = Date.now();
+    this.logger.log('[UserRepository] Obteniendo estadísticas por país');
+
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          countryCode: { not: null },
+        },
+        select: {
+          id: true,
+          countryCode: true,
+        },
+      });
+
+      const stats: Record<string, number> = {};
+      users.forEach((user) => {
+        if (user.countryCode) {
+          stats[user.countryCode] = (stats[user.countryCode] || 0) + 1;
+        }
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Estadísticas por país obtenidas en ${duration}ms`
+      );
+
+      return stats;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al obtener estadísticas por país después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al obtener estadísticas por país: ${error instanceof Error ? error.message : 'Error desconocido'}`,
         error instanceof Error ? error : undefined
       );
     }

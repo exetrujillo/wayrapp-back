@@ -4,6 +4,8 @@
 import { Email } from '@/core/domain/value-objects/Email';
 import { Role } from '@/core/domain/value-objects/Role';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
+import { Username } from '@/core/domain/value-objects/Username';
+import { CountryCode } from '@/core/domain/value-objects/CountryCode';
 import { v4 as uuidv4 } from 'uuid';
 
 export class User {
@@ -11,8 +13,10 @@ export class User {
   private constructor(
     public readonly id: string,
     public readonly email: Email,
+    public readonly username: Username,
     public readonly passwordHash: HashedPassword,
     public readonly role: Role,
+    public readonly countryCode: CountryCode | null, // Opcional - puede ser null
     public readonly createdAt: Date,
     public readonly updatedAt: Date
   ) {
@@ -22,16 +26,20 @@ export class User {
   // FACTORY METHOD - Para crear nuevos usuarios
   static create(
     email: Email,
+    username: Username,
     passwordHash: HashedPassword,
     role: Role,
+    countryCode?: CountryCode | null, // Opcional
     id?: string // Opcional para casos especiales (testing, migración)
   ): User {
     const now = new Date();
     return new User(
       id || User.generateUUID(),
       email,
+      username,
       passwordHash,
       role,
+      countryCode || null,
       now,
       now
     );
@@ -41,12 +49,23 @@ export class User {
   static fromPersistence(
     id: string,
     email: Email,
+    username: Username,
     passwordHash: HashedPassword,
     role: Role,
+    countryCode: CountryCode | null,
     createdAt: Date,
     updatedAt: Date
   ): User {
-    return new User(id, email, passwordHash, role, createdAt, updatedAt);
+    return new User(
+      id,
+      email,
+      username,
+      passwordHash,
+      role,
+      countryCode,
+      createdAt,
+      updatedAt
+    );
   }
 
   // Generación de UUID
@@ -80,6 +99,11 @@ export class User {
     return this.email.value;
   }
 
+  // Método para obtener el username como string (útil para APIs)
+  getUsernameValue(): string {
+    return this.username.value;
+  }
+
   // Método para obtener el role como string (útil para APIs)
   getRoleValue(): string {
     return this.role.value;
@@ -88,6 +112,44 @@ export class User {
   // Método para obtener el password hash como string (útil para APIs)
   getPasswordHashValue(): string {
     return this.passwordHash.value;
+  }
+
+  // Métodos para el país
+  getCountryCodeValue(): string | null {
+    return this.countryCode?.value || null;
+  }
+
+  getCountryName(): string | null {
+    return this.countryCode?.getDisplayName() || null;
+  }
+
+  getCountryFlag(): string | null {
+    return this.countryCode?.getFlag() || null;
+  }
+
+  // Métodos de clasificación geográfica
+  isFromNorthAmerica(): boolean {
+    return this.countryCode?.isNorthAmerica() || false;
+  }
+
+  isFromSouthAmerica(): boolean {
+    return this.countryCode?.isSouthAmerica() || false;
+  }
+
+  isFromEurope(): boolean {
+    return this.countryCode?.isEurope() || false;
+  }
+
+  isFromAsia(): boolean {
+    return this.countryCode?.isAsia() || false;
+  }
+
+  isFromAfrica(): boolean {
+    return this.countryCode?.isAfrica() || false;
+  }
+
+  isFromOceania(): boolean {
+    return this.countryCode?.isOceania() || false;
   }
 
   /*
@@ -112,12 +174,24 @@ export class User {
       throw new Error('El usuario debe tener un email válido');
     }
 
+    if (!this.username || !(this.username instanceof Username)) {
+      throw new Error('El usuario debe tener un username válido');
+    }
+
     if (!this.role || !(this.role instanceof Role)) {
       throw new Error('El usuario debe tener un rol válido asignado');
     }
 
     if (!this.passwordHash || !(this.passwordHash instanceof HashedPassword)) {
       throw new Error('El usuario debe tener un hash de contraseña válido');
+    }
+
+    // CountryCode es opcional, pero si existe debe ser válido
+    if (
+      this.countryCode !== null &&
+      !(this.countryCode instanceof CountryCode)
+    ) {
+      throw new Error('El código de país debe ser válido o null');
     }
 
     // Validaciones de fechas

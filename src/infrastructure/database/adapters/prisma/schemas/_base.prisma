@@ -3,8 +3,10 @@ model User {
   // --- Campos Esenciales ---
   id           String   @id // Vamos a usar UUID pero lo generamos en la app para no depender de la BD
   email        String   @unique
+  username     String   @unique
   passwordHash String   @map("password_hash")
   role         Role     @default(student)
+  countryCode  String?  @map("country_code") // Opcional - código de país ISO
 
   // --- Timestamps ---
   createdAt    DateTime @default(now()) @map("created_at")
