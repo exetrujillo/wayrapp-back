@@ -51,28 +51,20 @@ export function makeUserRepositoryContractTest(
 
     describe('create', () => {
       it('debería crear un nuevo usuario y retornarlo', async () => {
-        const userData = new User(
-          uuidv4(),
-          new Email('contract-test@example.com'),
-          new HashedPassword(
+        // Datos básicos para crear el usuario
+        const userData = {
+          email: new Email('contract-test@example.com'),
+          passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
-          new Role('student'),
-          new Date(), // Será ignorado por create
-          new Date() // Será ignorado por create
-        );
+          role: new Role('student'),
+        };
 
-        // Crear datos de usuario sin timestamps para el método create
-        const createData = {
-          id: userData.id,
-          email: userData.email,
-          passwordHash: userData.passwordHash,
-          role: userData.role,
-        } as Omit<User, 'createdAt' | 'updatedAt'>;
-        const createdUser = await userRepository.create(createData);
+        const createdUser = await userRepository.create(userData);
 
         expect(createdUser).toBeInstanceOf(User);
-        expect(createdUser.id).toBe(userData.id);
+        expect(createdUser.id).toBeDefined(); // ID generado automáticamente
+        expect(typeof createdUser.id).toBe('string');
         expect(createdUser.email).toBeInstanceOf(Email);
         expect(createdUser.email.value).toBe(userData.email.value);
         expect(createdUser.passwordHash).toBeInstanceOf(HashedPassword);
@@ -85,35 +77,26 @@ export function makeUserRepositoryContractTest(
         expect(createdUser.updatedAt).toBeInstanceOf(Date);
 
         // Verificar que el usuario realmente se guardó en la base de datos
-        const userExistsInDb = await verifyUserInDatabase(userData.id);
+        const userExistsInDb = await verifyUserInDatabase(createdUser.id);
         expect(userExistsInDb).toBe(true);
       });
     });
 
     describe('findById', () => {
       it('debería encontrar un usuario por su ID', async () => {
-        const userData = new User(
-          uuidv4(),
-          new Email('findbyid-test@example.com'),
-          new HashedPassword(
+        const userData = {
+          email: new Email('findbyid-test@example.com'),
+          passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
-          new Role('student'),
-          new Date(),
-          new Date()
-        );
+          role: new Role('student'),
+        };
 
-        const createData = {
-          id: userData.id,
-          email: userData.email,
-          passwordHash: userData.passwordHash,
-          role: userData.role,
-        } as Omit<User, 'createdAt' | 'updatedAt'>;
-        await userRepository.create(createData);
-        const foundUser = await userRepository.findById(userData.id);
+        const createdUser = await userRepository.create(userData);
+        const foundUser = await userRepository.findById(createdUser.id);
 
         expect(foundUser).toBeInstanceOf(User);
-        expect(foundUser?.id).toBe(userData.id);
+        expect(foundUser?.id).toBe(createdUser.id);
         expect(foundUser?.email).toBeInstanceOf(Email);
         expect(foundUser?.email.value).toBe(userData.email.value);
         expect(foundUser?.passwordHash).toBeInstanceOf(HashedPassword);
@@ -130,30 +113,21 @@ export function makeUserRepositoryContractTest(
 
     describe('findByEmail', () => {
       it('debería encontrar un usuario por su email', async () => {
-        const userData = new User(
-          uuidv4(),
-          new Email('findbyemail-test@example.com'),
-          new HashedPassword(
+        const userData = {
+          email: new Email('findbyemail-test@example.com'),
+          passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
-          new Role('content_creator'),
-          new Date(),
-          new Date()
-        );
+          role: new Role('content_creator'),
+        };
 
-        const createData = {
-          id: userData.id,
-          email: userData.email,
-          passwordHash: userData.passwordHash,
-          role: userData.role,
-        } as Omit<User, 'createdAt' | 'updatedAt'>;
-        await userRepository.create(createData);
+        const createdUser = await userRepository.create(userData);
         const foundUser = await userRepository.findByEmail(
           userData.email.value
         );
 
         expect(foundUser).toBeInstanceOf(User);
-        expect(foundUser?.id).toBe(userData.id);
+        expect(foundUser?.id).toBe(createdUser.id);
         expect(foundUser?.email).toBeInstanceOf(Email);
         expect(foundUser?.email.value).toBe(userData.email.value);
         expect(foundUser?.role).toBeInstanceOf(Role);
@@ -171,24 +145,15 @@ export function makeUserRepositoryContractTest(
 
     describe('update', () => {
       it('debería actualizar un usuario existente', async () => {
-        const userData = new User(
-          uuidv4(),
-          new Email('update-test@example.com'),
-          new HashedPassword(
+        const userData = {
+          email: new Email('update-test@example.com'),
+          passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
-          new Role('student'),
-          new Date(),
-          new Date()
-        );
+          role: new Role('student'),
+        };
 
-        const createData = {
-          id: userData.id,
-          email: userData.email,
-          passwordHash: userData.passwordHash,
-          role: userData.role,
-        } as Omit<User, 'createdAt' | 'updatedAt'>;
-        await userRepository.create(createData);
+        const createdUser = await userRepository.create(userData);
 
         const updateData = {
           email: new Email('updated-email@example.com'),
@@ -196,12 +161,12 @@ export function makeUserRepositoryContractTest(
         };
 
         const updatedUser = await userRepository.update(
-          userData.id,
+          createdUser.id,
           updateData
         );
 
         expect(updatedUser).toBeInstanceOf(User);
-        expect(updatedUser?.id).toBe(userData.id);
+        expect(updatedUser?.id).toBe(createdUser.id);
         expect(updatedUser?.email).toBeInstanceOf(Email);
         expect(updatedUser?.email.value).toBe(updateData.email.value);
         expect(updatedUser?.role).toBeInstanceOf(Role);
@@ -224,34 +189,25 @@ export function makeUserRepositoryContractTest(
 
     describe('delete', () => {
       it('debería eliminar un usuario existente', async () => {
-        const userData = new User(
-          uuidv4(),
-          new Email('delete-test@example.com'),
-          new HashedPassword(
+        const userData = {
+          email: new Email('delete-test@example.com'),
+          passwordHash: new HashedPassword(
             '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
           ),
-          new Role('student'),
-          new Date(),
-          new Date()
-        );
+          role: new Role('student'),
+        };
 
-        const createData = {
-          id: userData.id,
-          email: userData.email,
-          passwordHash: userData.passwordHash,
-          role: userData.role,
-        } as Omit<User, 'createdAt' | 'updatedAt'>;
-        await userRepository.create(createData);
+        const createdUser = await userRepository.create(userData);
 
         // Verificar que el usuario existe antes de eliminarlo
-        const userBeforeDelete = await userRepository.findById(userData.id);
+        const userBeforeDelete = await userRepository.findById(createdUser.id);
         expect(userBeforeDelete).toBeInstanceOf(User);
 
         // Eliminar el usuario
-        await userRepository.delete(userData.id);
+        await userRepository.delete(createdUser.id);
 
         // Verificar que el usuario ya no existe
-        const userAfterDelete = await userRepository.findById(userData.id);
+        const userAfterDelete = await userRepository.findById(createdUser.id);
         expect(userAfterDelete).toBeNull();
       });
 
@@ -262,6 +218,73 @@ export function makeUserRepositoryContractTest(
         await expect(
           userRepository.delete(nonExistentId)
         ).resolves.not.toThrow();
+      });
+    });
+
+    describe('countUsers', () => {
+      it('debería contar el número total de usuarios', async () => {
+        // Inicialmente no debería haber usuarios
+        let userCount = await userRepository.countUsers();
+        expect(userCount).toBe(0);
+
+        // Crear algunos usuarios
+        const userData1 = {
+          email: new Email('contract-test@example.com'),
+          passwordHash: new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          role: new Role('student'),
+        };
+        const userData2 = {
+          email: new Email('contract-test2@example.com'),
+          passwordHash: new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          role: new Role('admin'),
+        };
+
+        await userRepository.create(userData1);
+        await userRepository.create(userData2);
+
+        // Ahora el conteo debería reflejar los usuarios creados
+        userCount = await userRepository.countUsers();
+        expect(userCount).toBe(2);
+      });
+    });
+
+    describe('findUsersByRole', () => {
+      it('debería encontrar usuarios por su rol', async () => {
+        // Crear algunos usuarios
+        const userData1 = {
+          email: new Email('contract-test@example.com'),
+          passwordHash: new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          role: new Role('student'),
+        };
+        const userData2 = {
+          email: new Email('contract-test2@example.com'),
+          passwordHash: new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          role: new Role('admin'),
+        };
+        const userData3 = {
+          email: new Email('contract-test3@example.com'),
+          passwordHash: new HashedPassword(
+            '$2b$12$L9.o/C.s5/b4j2e5.d8B9eO3U.G9eY2n9Z6k3W2b7j2k3X8.l2A3O'
+          ),
+          role: new Role('admin'),
+        };
+
+        await userRepository.create(userData1);
+        await userRepository.create(userData2);
+        await userRepository.create(userData3);
+
+        const students = await userRepository.findUsersByRole('student');
+        const admins = await userRepository.findUsersByRole('admin');
+        expect(students.length).toBe(1);
+        expect(admins.length).toBe(2);
       });
     });
   });

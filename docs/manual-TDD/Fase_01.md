@@ -196,6 +196,13 @@ export class EntityStatus {
 - **Reutilizable**: Puedes usar `EntityStatus` en cualquier parte del código
 - **Type Safety**: TypeScript te ayuda a detectar errores
 
+### ¿Cuándo NO usar Value Objects?
+
+- Si el valor es simple y no tiene lógica (como un número o string sin reglas)
+```
+❌ No crear: UserAge (solo es un número, sin lógica compleja)
+✅ Sí crear: Email (tiene validación de formato compleja)
+```
 ## Paso 1.3: Definir la Interface del Repository
 
 ### ¿Qué es un Repository?

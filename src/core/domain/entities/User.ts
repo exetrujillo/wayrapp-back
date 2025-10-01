@@ -4,9 +4,11 @@
 import { Email } from '@/core/domain/value-objects/Email';
 import { Role } from '@/core/domain/value-objects/Role';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
+import { v4 as uuidv4 } from 'uuid';
 
 export class User {
-  constructor(
+  // Constructor privado para forzar uso de factory methods
+  private constructor(
     public readonly id: string,
     public readonly email: Email,
     public readonly passwordHash: HashedPassword,
@@ -15,6 +17,41 @@ export class User {
     public readonly updatedAt: Date
   ) {
     this.validateConstructorParams();
+  }
+
+  // FACTORY METHOD - Para crear nuevos usuarios
+  static create(
+    email: Email,
+    passwordHash: HashedPassword,
+    role: Role,
+    id?: string // Opcional para casos especiales (testing, migración)
+  ): User {
+    const now = new Date();
+    return new User(
+      id || User.generateUUID(),
+      email,
+      passwordHash,
+      role,
+      now,
+      now
+    );
+  }
+
+  // FACTORY METHOD - Para reconstruir desde BD
+  static fromPersistence(
+    id: string,
+    email: Email,
+    passwordHash: HashedPassword,
+    role: Role,
+    createdAt: Date,
+    updatedAt: Date
+  ): User {
+    return new User(id, email, passwordHash, role, createdAt, updatedAt);
+  }
+
+  // Generación de UUID
+  private static generateUUID(): string {
+    return uuidv4();
   }
 
   // Métodos de utilidad que delegan a los value objects

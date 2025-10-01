@@ -66,27 +66,42 @@ export class UserRepository implements IUserRepository {
     this.logger = logger;
   }
 
-  async create(userData: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
+  async create(userData: {
+    email: Email;
+    passwordHash: HashedPassword;
+    role: Role;
+  }): Promise<User> {
     const startTime = Date.now();
     this.logger.log(
-      `[UserRepository] Creando usuario con el email: ${userData.email.value}`
+      `[UserRepository] Creando usuario con email: ${userData.email.value}`
     );
 
     try {
-      // Mapear value objects a primitivos para Prisma
-      const prismaData = this.mapFromUser(userData);
+      // La entidad se crea a sí misma con UUID
+      const user = User.create(
+        userData.email,
+        userData.passwordHash,
+        userData.role
+      );
 
-      const createdUser = await this.prisma.user.create({
-        data: prismaData,
+      // Repository solo persiste lo que la entidad ya definió
+      await this.prisma.user.create({
+        data: {
+          id: user.id,
+          email: user.getEmailValue(),
+          passwordHash: user.getPasswordHashValue(),
+          role: this.mapRoleToEnum(user.getRoleValue()),
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
       });
 
       const duration = Date.now() - startTime;
       this.logger.log(
-        `[UserRepository] usuario creado exitosamente en ${duration}ms. ID: ${createdUser.id}`
+        `[UserRepository] Usuario creado exitosamente en ${duration}ms. ID: ${user.id}`
       );
 
-      // Mapear primitivos de Prisma a entidad de dominio
-      return this.mapToUser(createdUser);
+      return user; // Retornamos la entidad que creamos
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(
@@ -220,7 +235,21 @@ export class UserRepository implements IUserRepository {
 
     try {
       // Mapear value objects a primitivos para la actualización
-      const updateData = this.mapPartialFromUser(userData);
+      const updateData: {
+        email?: string;
+        passwordHash?: string;
+        role?: PrismaRole;
+      } = {};
+
+      if (userData.email) {
+        updateData.email = userData.email.value;
+      }
+      if (userData.passwordHash) {
+        updateData.passwordHash = userData.passwordHash.value;
+      }
+      if (userData.role) {
+        updateData.role = this.mapRoleToEnum(userData.role.value);
+      }
 
       const updatedUser = await this.prisma.user.update({
         where: { id },
@@ -334,11 +363,83 @@ export class UserRepository implements IUserRepository {
     }
   }
 
+  async countUsers(): Promise<number> {
+    const startTime = Date.now();
+    this.logger.log('[UserRepository] Contando usuarios...');
+
+    try {
+      const count = await this.prisma.user.count();
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Conteo de usuarios completado en ${duration}ms: ${count} usuarios`
+      );
+      return count;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al contar usuarios después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al contar usuarios: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async findUsersByRole(role: string): Promise<User[]> {
+    const startTime = Date.now();
+    this.logger.log(`[UserRepository] Encontrando usuarios por rol: ${role}`);
+    try {
+      const PrismaRoleValue = this.mapRoleToEnum(role);
+
+      const users = await this.prisma.user.findMany({
+        where: { role: PrismaRoleValue },
+        // Optimización: seleccionar solo los campos necesarios
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[UserRepository] Encontrados ${users.length} usuarios con el rol ${role} en ${duration}ms`
+      );
+
+      return users.map(this.mapToUser.bind(this));
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `[UserRepository] Fallo al encontrar usuarios por rol: ${role} después de ${duration}ms:`,
+        error
+      );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new DatabaseConnectionError(error);
+      }
+
+      throw new UserRepositoryError(
+        `Fallo al encontrar usuarios por rol: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
   /**
    * Mapea un objeto Prisma User a una entidad de dominio User
    */
   private mapToUser(prismaUser: PrismaUser): User {
-    return new User(
+    return User.fromPersistence(
       prismaUser.id,
       new Email(prismaUser.email),
       new HashedPassword(prismaUser.passwordHash),
@@ -346,50 +447,6 @@ export class UserRepository implements IUserRepository {
       prismaUser.createdAt,
       prismaUser.updatedAt
     );
-  }
-
-  /**
-   * Mapea una entidad de dominio User (sin timestamps) a un objeto para Prisma
-   */
-  private mapFromUser(userData: Omit<User, 'createdAt' | 'updatedAt'>): {
-    id: string;
-    email: string;
-    passwordHash: string;
-    role: PrismaRole;
-  } {
-    return {
-      id: userData.id,
-      email: userData.email.value,
-      passwordHash: userData.passwordHash.value,
-      role: this.mapRoleToEnum(userData.role.value),
-    };
-  }
-
-  /**
-   * Mapea datos parciales de User a un objeto para actualización en Prisma
-   */
-  private mapPartialFromUser(userData: Partial<User>): {
-    email?: string;
-    passwordHash?: string;
-    role?: PrismaRole;
-  } {
-    const updateData: {
-      email?: string;
-      passwordHash?: string;
-      role?: PrismaRole;
-    } = {};
-
-    if (userData.email) {
-      updateData.email = userData.email.value;
-    }
-    if (userData.passwordHash) {
-      updateData.passwordHash = userData.passwordHash.value;
-    }
-    if (userData.role) {
-      updateData.role = this.mapRoleToEnum(userData.role.value);
-    }
-
-    return updateData;
   }
 
   /**

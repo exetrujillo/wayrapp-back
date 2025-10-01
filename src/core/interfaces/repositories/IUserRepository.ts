@@ -1,14 +1,22 @@
 // src/core/interfaces/repositories/IUserRepository.ts
 
 import { User } from '@/core/domain/entities/User';
+import { Email } from '@/core/domain/value-objects/Email';
+import { HashedPassword } from '@/core/domain/value-objects/Password';
+import { Role } from '@/core/domain/value-objects/Role';
 
 export interface IUserRepository {
   /**
    * Crea un nuevo usuario en el sistema.
-   * @param userData Datos del usuario a crear, excluyendo createdAt y updatedAt.
+   * La entidad User se encarga de generar su propio ID y timestamps.
+   * @param userData Datos básicos del usuario (email, password, role).
    * @returns El usuario creado con sus propiedades completas.
    */
-  create(userData: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User>;
+  create(userData: {
+    email: Email;
+    passwordHash: HashedPassword;
+    role: Role;
+  }): Promise<User>;
 
   /**
    * Busca un usuario por su ID único.
@@ -37,4 +45,19 @@ export interface IUserRepository {
    * @param id El ID del usuario a eliminar.
    */
   delete(id: string): Promise<void>;
+
+  // 📊 CONSULTAS ESPECIALES - Para reportes o estadísticas
+
+  /**
+   * Cuenta el número total de usuarios en el sistema.
+   * @returns El número total de usuarios.
+   */
+  countUsers(): Promise<number>;
+
+  /**
+   * Encuentra usuarios por su rol.
+   * @param role El rol de los usuarios a buscar.
+   * @returns Una lista de usuarios que coinciden con el rol especificado.
+   */
+  findUsersByRole(role: string): Promise<User[]>;
 }
