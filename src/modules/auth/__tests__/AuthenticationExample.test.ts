@@ -171,7 +171,9 @@ describe('Authentication Example with Real bcrypt', () => {
         user.username,
         newHashedPassword,
         user.role,
+        user.status,
         user.countryCode,
+        user.lastLogin,
         user.createdAt,
         new Date() // updatedAt actualizado
       );

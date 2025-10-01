@@ -6,6 +6,7 @@ import { Role } from '@/core/domain/value-objects/Role';
 import { HashedPassword } from '@/core/domain/value-objects/Password';
 import { Username } from '@/core/domain/value-objects/Username';
 import { CountryCode } from '@/core/domain/value-objects/CountryCode';
+import { UserStatus } from '@/core/domain/value-objects/UserStatus';
 import { v4 as uuidv4 } from 'uuid';
 
 export class User {
@@ -16,7 +17,9 @@ export class User {
     public readonly username: Username,
     public readonly passwordHash: HashedPassword,
     public readonly role: Role,
+    public readonly status: UserStatus,
     public readonly countryCode: CountryCode | null, // Opcional - puede ser null
+    public readonly lastLogin: Date | null, // Opcional - null si nunca se ha logueado
     public readonly createdAt: Date,
     public readonly updatedAt: Date
   ) {
@@ -30,6 +33,7 @@ export class User {
     passwordHash: HashedPassword,
     role: Role,
     countryCode?: CountryCode | null, // Opcional
+    status?: UserStatus, // Opcional - por defecto pending confirmation
     id?: string // Opcional para casos especiales (testing, migración)
   ): User {
     const now = new Date();
@@ -39,7 +43,9 @@ export class User {
       username,
       passwordHash,
       role,
+      status || UserStatus.createPendingConfirmation(), // Por defecto pending
       countryCode || null,
+      null, // lastLogin es null para usuarios nuevos
       now,
       now
     );
@@ -52,7 +58,9 @@ export class User {
     username: Username,
     passwordHash: HashedPassword,
     role: Role,
+    status: UserStatus,
     countryCode: CountryCode | null,
+    lastLogin: Date | null,
     createdAt: Date,
     updatedAt: Date
   ): User {
@@ -62,7 +70,9 @@ export class User {
       username,
       passwordHash,
       role,
+      status,
       countryCode,
+      lastLogin,
       createdAt,
       updatedAt
     );
@@ -112,6 +122,128 @@ export class User {
   // Método para obtener el password hash como string (útil para APIs)
   getPasswordHashValue(): string {
     return this.passwordHash.value;
+  }
+
+  // Métodos para el estado del usuario
+  getStatusValue(): string {
+    return this.status.value;
+  }
+
+  getStatusDisplayName(): string {
+    return this.status.getDisplayName();
+  }
+
+  // Métodos de estado del usuario
+  isActive(): boolean {
+    return this.status.isActive();
+  }
+
+  isPendingConfirmation(): boolean {
+    return this.status.isPendingConfirmation();
+  }
+
+  isSuspended(): boolean {
+    return this.status.isSuspended();
+  }
+
+  isBanned(): boolean {
+    return this.status.isBanned();
+  }
+
+  // Métodos de negocio relacionados con el estado
+  canLogin(): boolean {
+    return this.status.canLogin();
+  }
+
+  canBeReactivated(): boolean {
+    return this.status.canBeReactivated();
+  }
+
+  requiresEmailConfirmation(): boolean {
+    return this.status.requiresEmailConfirmation();
+  }
+
+  isPermanentlyBlocked(): boolean {
+    return this.status.isPermanentlyBlocked();
+  }
+
+  // Métodos para lastLogin
+  getLastLoginValue(): Date | null {
+    return this.lastLogin;
+  }
+
+  hasEverLoggedIn(): boolean {
+    return this.lastLogin !== null;
+  }
+
+  getLastLoginFormatted(): string | null {
+    if (!this.lastLogin) return null;
+    return this.lastLogin.toISOString();
+  }
+
+  getDaysSinceLastLogin(): number | null {
+    if (!this.lastLogin) return null;
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - this.lastLogin.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  // Factory methods para cambios de estado
+  static createActiveUser(
+    email: Email,
+    username: Username,
+    passwordHash: HashedPassword,
+    role: Role,
+    countryCode?: CountryCode | null,
+    id?: string
+  ): User {
+    return User.create(
+      email,
+      username,
+      passwordHash,
+      role,
+      countryCode,
+      UserStatus.createActive(),
+      id
+    );
+  }
+
+  static createSuspendedUser(
+    email: Email,
+    username: Username,
+    passwordHash: HashedPassword,
+    role: Role,
+    countryCode?: CountryCode | null,
+    id?: string
+  ): User {
+    return User.create(
+      email,
+      username,
+      passwordHash,
+      role,
+      countryCode,
+      UserStatus.createSuspended(),
+      id
+    );
+  }
+
+  static createBannedUser(
+    email: Email,
+    username: Username,
+    passwordHash: HashedPassword,
+    role: Role,
+    countryCode?: CountryCode | null,
+    id?: string
+  ): User {
+    return User.create(
+      email,
+      username,
+      passwordHash,
+      role,
+      countryCode,
+      UserStatus.createBanned(),
+      id
+    );
   }
 
   // Métodos para el país
@@ -186,12 +318,21 @@ export class User {
       throw new Error('El usuario debe tener un hash de contraseña válido');
     }
 
+    if (!this.status || !(this.status instanceof UserStatus)) {
+      throw new Error('El usuario debe tener un estado válido');
+    }
+
     // CountryCode es opcional, pero si existe debe ser válido
     if (
       this.countryCode !== null &&
       !(this.countryCode instanceof CountryCode)
     ) {
       throw new Error('El código de país debe ser válido o null');
+    }
+
+    // lastLogin es opcional, pero si existe debe ser una fecha válida
+    if (this.lastLogin !== null && !(this.lastLogin instanceof Date)) {
+      throw new Error('La fecha de último login debe ser válida o null');
     }
 
     // Validaciones de fechas

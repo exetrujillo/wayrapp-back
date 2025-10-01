@@ -1,16 +1,18 @@
 // --- Modelo de Usuario ---
 model User {
   // --- Campos Esenciales ---
-  id           String   @id // Vamos a usar UUID pero lo generamos en la app para no depender de la BD
-  email        String   @unique
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(student)
-  countryCode  String?  @map("country_code") // Opcional - código de país ISO
+  id           String     @id // Vamos a usar UUID pero lo generamos en la app para no depender de la BD
+  email        String     @unique
+  username     String     @unique
+  passwordHash String     @map("password_hash")
+  role         Role       @default(student)
+  status       UserStatus @default(confirmation_pending) @map("user_status")
+  countryCode  String?    @map("country_code") // Opcional - código de país ISO
 
   // --- Timestamps ---
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  lastLogin    DateTime?  @map("last_login") // Opcional - null si nunca se ha logueado
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   // --- Mapeo de Tabla ---
   @@map("users") // Mantenemos el nombre de la tabla en plural, es una buena convención
@@ -21,4 +23,12 @@ enum Role {
   student
   content_creator
   admin
+}
+
+// Enum para el estado del usuario
+enum UserStatus {
+  active
+  confirmation_pending
+  suspended
+  banned
 }

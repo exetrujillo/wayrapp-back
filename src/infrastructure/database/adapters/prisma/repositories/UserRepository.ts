@@ -4,6 +4,7 @@ import {
   PrismaClient,
   Prisma,
   Role as PrismaRole,
+  UserStatus as PrismaUserStatus,
 } from '@/infrastructure/node_modules/.prisma/client';
 import { IUserRepository } from '@/core/interfaces/repositories/IUserRepository';
 import { User } from '@/core/domain/entities/User';
@@ -12,6 +13,7 @@ import { HashedPassword } from '@/core/domain/value-objects/Password';
 import { Role } from '@/core/domain/value-objects/Role';
 import { Username } from '@/core/domain/value-objects/Username';
 import { CountryCode } from '@/core/domain/value-objects/CountryCode';
+import { UserStatus } from '@/core/domain/value-objects/UserStatus';
 
 /**
  * Errores específicos de Prisma para manejo de errores mejorado
@@ -97,7 +99,9 @@ export class UserRepository implements IUserRepository {
           username: user.getUsernameValue(),
           passwordHash: user.getPasswordHashValue(),
           role: this.mapRoleToEnum(user.getRoleValue()),
+          status: this.mapUserStatusToEnum(user.getStatusValue()),
           countryCode: user.getCountryCodeValue(),
+          lastLogin: user.getLastLoginValue(),
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
@@ -152,7 +156,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -203,7 +209,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -280,7 +288,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -428,7 +438,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -467,7 +479,9 @@ export class UserRepository implements IUserRepository {
     username: string;
     passwordHash: string;
     role: PrismaRole;
+    status: PrismaUserStatus;
     countryCode: string | null;
+    lastLogin: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): User {
@@ -477,7 +491,9 @@ export class UserRepository implements IUserRepository {
       new Username(prismaUser.username),
       new HashedPassword(prismaUser.passwordHash),
       new Role(this.mapEnumToRole(prismaUser.role)),
+      new UserStatus(this.mapEnumToUserStatus(prismaUser.status)),
       prismaUser.countryCode ? new CountryCode(prismaUser.countryCode) : null,
+      prismaUser.lastLogin,
       prismaUser.createdAt,
       prismaUser.updatedAt
     );
@@ -504,6 +520,33 @@ export class UserRepository implements IUserRepository {
    */
   private mapEnumToRole(prismaRole: PrismaRole): string {
     return prismaRole.toString();
+  }
+
+  /**
+   * Mapea un string de user status a enum de Prisma
+   */
+  private mapUserStatusToEnum(statusValue: string): PrismaUserStatus {
+    switch (statusValue) {
+      case 'active':
+        return 'active' as PrismaUserStatus;
+      case 'confirmation_pending':
+        return 'confirmation_pending' as PrismaUserStatus;
+      case 'suspended':
+        return 'suspended' as PrismaUserStatus;
+      case 'banned':
+        return 'banned' as PrismaUserStatus;
+      default:
+        throw new UserRepositoryError(
+          `Valor de estado de usuario inválido: ${statusValue}`
+        );
+    }
+  }
+
+  /**
+   * Mapea un enum de Prisma a string de user status
+   */
+  private mapEnumToUserStatus(prismaUserStatus: PrismaUserStatus): string {
+    return prismaUserStatus.toString();
   }
 
   /**
@@ -561,7 +604,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -613,7 +658,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -661,7 +708,9 @@ export class UserRepository implements IUserRepository {
           username: true,
           passwordHash: true,
           role: true,
+          status: true,
           countryCode: true,
+          lastLogin: true,
           createdAt: true,
           updatedAt: true,
         },

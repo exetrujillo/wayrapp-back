@@ -8,6 +8,7 @@ import { HashedPassword } from '@/core/domain/value-objects/Password';
 import { Role } from '@/core/domain/value-objects/Role';
 import { Username } from '@/core/domain/value-objects/Username';
 import { CountryCode } from '@/core/domain/value-objects/CountryCode';
+import { UserStatus } from '@/core/domain/value-objects/UserStatus';
 
 /**
  * Función de test de contrato para IUserRepository.
@@ -81,6 +82,9 @@ export function makeUserRepositoryContractTest(
         expect(createdUser.role.value).toBe(userData.role.value);
         expect(createdUser.countryCode).toBeInstanceOf(CountryCode);
         expect(createdUser.countryCode?.value).toBe(userData.countryCode.value);
+        expect(createdUser.status).toBeInstanceOf(UserStatus);
+        expect(createdUser.status.value).toBe('confirmation_pending'); // Default status
+        expect(createdUser.lastLogin).toBeNull(); // New users haven't logged in
         expect(createdUser.createdAt).toBeInstanceOf(Date);
         expect(createdUser.updatedAt).toBeInstanceOf(Date);
 
@@ -111,6 +115,8 @@ export function makeUserRepositoryContractTest(
         expect(foundUser?.email.value).toBe(userData.email.value);
         expect(foundUser?.passwordHash).toBeInstanceOf(HashedPassword);
         expect(foundUser?.role).toBeInstanceOf(Role);
+        expect(foundUser?.status).toBeInstanceOf(UserStatus);
+        expect(foundUser?.lastLogin).toBeNull();
       });
 
       it('debería retornar null si el usuario no existe', async () => {
@@ -143,6 +149,7 @@ export function makeUserRepositoryContractTest(
         expect(foundUser?.email.value).toBe(userData.email.value);
         expect(foundUser?.role).toBeInstanceOf(Role);
         expect(foundUser?.role.value).toBe(userData.role.value);
+        expect(foundUser?.status).toBeInstanceOf(UserStatus);
       });
 
       it('debería retornar null si el email no existe', async () => {

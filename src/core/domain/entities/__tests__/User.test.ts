@@ -6,6 +6,7 @@ import { Email } from '@/core/domain/value-objects/Email';
 import { Role } from '@/core/domain/value-objects/Role';
 import { Username } from '@/core/domain/value-objects/Username';
 import { CountryCode } from '@/core/domain/value-objects/CountryCode';
+import { UserStatus } from '@/core/domain/value-objects/UserStatus';
 import {
   PlainPassword,
   HashedPassword,
@@ -58,7 +59,15 @@ describe('User Entity', () => {
       const plainPassword = new PlainPassword('TestPass123!');
       const passwordHash = await passwordService.hash(plainPassword);
 
-      const user = User.create(email, username, passwordHash, role, null, id);
+      const user = User.create(
+        email,
+        username,
+        passwordHash,
+        role,
+        null,
+        undefined,
+        id
+      );
 
       expect(user.id).toBe(id);
       expect(user.email).toBe(email);
@@ -85,7 +94,9 @@ describe('User Entity', () => {
         username,
         passwordHash,
         role,
+        new UserStatus('active'),
         countryCode,
+        null,
         createdAt,
         updatedAt
       );
@@ -313,6 +324,8 @@ describe('User Entity', () => {
           validUsername,
           validPasswordHash,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           validDate,
           validDate
@@ -326,6 +339,8 @@ describe('User Entity', () => {
           validUsername,
           validPasswordHash,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           validDate,
           validDate
@@ -343,6 +358,8 @@ describe('User Entity', () => {
           validUsername,
           null as unknown as HashedPassword,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           validDate,
           validDate
@@ -356,6 +373,8 @@ describe('User Entity', () => {
           validUsername,
           'invalid' as unknown as HashedPassword,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           validDate,
           validDate
@@ -373,6 +392,8 @@ describe('User Entity', () => {
           validUsername,
           validPasswordHash,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           null as unknown as Date,
           validDate
@@ -386,6 +407,8 @@ describe('User Entity', () => {
           validUsername,
           validPasswordHash,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           validDate,
           null as unknown as Date
@@ -404,6 +427,8 @@ describe('User Entity', () => {
           validUsername,
           validPasswordHash,
           validRole,
+          new UserStatus('active'),
+          null,
           null,
           createdAt,
           updatedAt
