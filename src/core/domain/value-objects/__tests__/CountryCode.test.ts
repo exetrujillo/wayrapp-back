@@ -50,9 +50,9 @@ describe('CountryCode Value Object', () => {
         codes.forEach((code) => {
           const countryCode = new CountryCode(code);
           expect(countryCode.value).toBe(code);
-          expect((countryCode as Record<string, () => boolean>)[method]()).toBe(
-            true
-          );
+          expect(
+            (countryCode as unknown as Record<string, () => boolean>)[method]()
+          ).toBe(true);
         });
       });
     });
